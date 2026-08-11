@@ -11,6 +11,7 @@ import { keywordAlertManager } from '../core/keyword-alert/keyword-alert-manager
 import { notificationManager } from '../core/keyword-alert/notification-manager.js';
 import { matchPost } from '../core/keyword-alert/keyword-matcher.js';
 import { parseGalleryUrl } from '../core/gallery-context.js';
+import { isDCInsideUrl } from '../core/site-detector.js';
 
 logger.info('Service Worker: Starting DC Ultimate background process...');
 
@@ -120,6 +121,8 @@ async function initializeBackground() {
 
     // Configure SidePanel Behavior
     if (typeof chrome !== 'undefined' && chrome.sidePanel) {
+      chrome.sidePanel.setOptions({ enabled: false }).catch(console.warn);
+      
       const openPanelOnAction = configManager.get('openSidePanelOnActionClick') === true;
       chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: openPanelOnAction }).catch(console.warn);
       if (chrome.action && chrome.action.setPopup) {
@@ -287,10 +290,25 @@ if (typeof chrome !== 'undefined' && chrome.alarms) {
 // Track active tab changes for Canonical GalleryContext
 if (typeof chrome !== 'undefined' && chrome.tabs) {
   chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab && typeof chrome.sidePanel !== 'undefined') {
+        const isDc = (tab.url && isDCInsideUrl(tab.url)) ? true : false;
+        chrome.sidePanel.setOptions({ tabId, path: 'src/ui/sidepanel/sidepanel.html', enabled: isDc }).catch(() => {});
+      }
+    } catch(e) {
+      // Ignore
+    }
     await refreshGalleryContext(tabId);
   });
 
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    const url = changeInfo.url || tab.url;
+    if (url && typeof chrome.sidePanel !== 'undefined') {
+      const isDc = isDCInsideUrl(url);
+      chrome.sidePanel.setOptions({ tabId, path: 'src/ui/sidepanel/sidepanel.html', enabled: isDc }).catch(() => {});
+    }
+
     if (changeInfo.url) {
       await refreshGalleryContext(tabId, changeInfo.url);
       return;

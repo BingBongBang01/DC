@@ -8,6 +8,7 @@ import { eventBus } from '../core/event-bus.js';
 import { messageRouter } from '../core/message-router.js';
 import { featureManager } from '../core/feature-manager.js';
 import { filterEngine } from '../core/filters/filter-engine.js';
+import { isDCInsideUrl } from '../core/site-detector.js';
 
 // Features Import
 import { testFeature } from '../features/test-feature.js';
@@ -50,6 +51,11 @@ async function runPhase(name, fn) {
 }
 
 async function initContentEngine() {
+  if (!isDCInsideUrl(window.location.href)) {
+    logger.warn('Content Script: Aborted execution on non-DCInside URL.');
+    return;
+  }
+
   // --- 0. 메시지 핸들러는 가장 먼저, 무조건 등록 ---
   if (typeof chrome !== 'undefined' && chrome.runtime) {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
