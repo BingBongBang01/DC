@@ -680,5 +680,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  document.getElementById('sp-btn-donation')?.addEventListener('click', () => {
+    const url = 'https://ko-fi.com/thk7410';
+    if (typeof chrome !== 'undefined' && chrome.windows) {
+      chrome.windows.create({
+        url: url,
+        type: 'popup',
+        width: 500,
+        height: 700,
+        focused: true
+      });
+    } else {
+      window.open(url, '_blank', 'width=500,height=700');
+    }
+  });
+
   renderQuickAccess();
 });

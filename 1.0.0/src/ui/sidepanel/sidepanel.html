@@ -11,8 +11,13 @@
   <div class="sp-container">
     <header class="sp-header">
       <div class="sp-header-titles">
-        <h1 class="sp-title">DC Ultimate</h1>
-        <h2 class="sp-subtitle">Workspace</h2>
+        <h1 class="sp-title">DC Extensions</h1>
+      </div>
+      <div style="flex: 1; display: flex; justify-content: flex-end; padding-right: 12px;">
+        <button type="button" id="sp-btn-donation" style="background-color: var(--md-sys-color-primary, #FF5E5B); color: var(--md-sys-color-on-primary, white); border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          도네이션
+        </button>
       </div>
       <div class="sp-status">
         <span class="sp-status-dot" aria-hidden="true"></span>
@@ -131,7 +136,7 @@
       </section>
 
       <!-- Quick Access (Recent & Favorites) -->
-      <section class="sp-section" aria-labelledby="heading-quick-access">
+      <section class="sp-section hidden" aria-labelledby="heading-quick-access" style="display: none;">
         <h2 id="heading-quick-access" class="sp-section-title">빠른 접근</h2>
         
         <div class="sp-quick-tabs">
