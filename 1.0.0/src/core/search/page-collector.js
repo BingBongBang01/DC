@@ -7,6 +7,22 @@ import { queryBuilder } from './query-builder.js';
 import { articleParser } from '../../parser/article-parser.js';
 import { logger } from '../logger.js';
 
+/**
+ * Extracts the `search_pos` cursor value from the "다음 검색" (next search page) link
+ * in a parsed DC search results document. Keyword search results are paginated via this
+ * opaque cursor rather than a plain incrementing page number - see QueryBuilder.buildUrl.
+ * @param {Document|null} doc
+ * @returns {string|null}
+ */
+function extractNextSearchPos(doc) {
+  if (!doc) return null;
+  const nextLink = doc.querySelector('a.search_next');
+  if (!nextLink) return null;
+  const href = nextLink.getAttribute('href') || '';
+  const match = href.match(/[?&]search_pos=(-?\d+)/);
+  return match ? match[1] : null;
+}
+
 export class PageCollector {
   /**
    * Collect pages sequentially based on SearchQuery
@@ -26,6 +42,7 @@ export class PageCollector {
 
     let actualPagesProcessed = 0;
     let successfulPages = 0;
+    let searchPos = null; // cursor for DC's keyword-search pagination (see QueryBuilder.buildUrl)
 
     logger.info(`PageCollector: Starting multi-page collection from page ${startPage} to ${endPage}`);
 
@@ -40,7 +57,14 @@ export class PageCollector {
         break;
       }
 
-      const pageUrl = queryBuilder.buildUrl(query, p);
+      // Keyword search requires the previous page's search_pos cursor to advance;
+      // if we've already collected once and there's no next-page cursor, DC has no more results.
+      if (query.keyword && p > startPage && !searchPos) {
+        logger.info('PageCollector: No further search_pos cursor available. Halting further collection.');
+        break;
+      }
+
+      const pageUrl = queryBuilder.buildUrl(query, p, searchPos);
       actualPagesProcessed++;
       
       try {
@@ -58,7 +82,11 @@ export class PageCollector {
         }
 
         const pageArticles = articleParser.parseList(doc, query.galleryId);
-        
+
+        if (query.keyword) {
+          searchPos = extractNextSearchPos(doc);
+        }
+
         // Stop if the page returned absolutely 0 articles (reached end of DC search results)
         // DC search returns empty results when paging beyond available data
         if (pageArticles.length === 0) {

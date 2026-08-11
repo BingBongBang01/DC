@@ -5,6 +5,19 @@ import { searchAggregationFeature } from '../../features/search-aggregation-feat
 import { escapeHTML } from '../../utils/sanitizer.js';
 import { MessageAction } from '../../core/message-contract.js';
 
+/**
+ * Clamp a user-entered "수집 페이지 수" value to a sane integer range.
+ * Mirrors the SearchQuery.maxPages clamp (1..100) so the input never
+ * silently sends an out-of-range value to the collector.
+ * @param {string|number} value
+ * @returns {number}
+ */
+function clampPageCount(value) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n) || Number.isNaN(n)) return 10;
+  return Math.min(Math.max(n, 1), 100);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await configManager.init();
   themeSystem.init(configManager.get('theme'));
@@ -18,11 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const galleryInput = document.getElementById('sp-search-gallery');
   const categorySelect = document.getElementById('sp-search-category');
   const pagesSelect = document.getElementById('sp-search-pages');
+  const pagesPresets = document.getElementById('sp-search-pages-presets');
   const pageSizeSelect = document.getElementById('sp-results-per-page');
   const sortSelect = document.getElementById('sp-sort-order');
   
   // Restore saved search options
-  if (pagesSelect) pagesSelect.value = configManager.get('spSearchPages') || '10';
+  if (pagesSelect) pagesSelect.value = clampPageCount(configManager.get('spSearchPages')) || 10;
   if (pageSizeSelect) pageSizeSelect.value = configManager.get('spResultsPerPage') || '20';
   if (sortSelect) sortSelect.value = configManager.get('spSortOrder') || 'newest';
   if (keywordInput) keywordInput.value = configManager.get('spKeyword') || '';
@@ -82,7 +96,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  pagesSelect?.addEventListener('change', (e) => configManager.set('spSearchPages', e.target.value));
+  pagesSelect?.addEventListener('change', (e) => {
+    const clamped = clampPageCount(e.target.value);
+    e.target.value = clamped;
+    configManager.set('spSearchPages', clamped);
+  });
+
+  pagesPresets?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-pages]');
+    if (!btn || !pagesSelect) return;
+    pagesSelect.value = btn.dataset.pages;
+    configManager.set('spSearchPages', clampPageCount(btn.dataset.pages));
+  });
   pageSizeSelect?.addEventListener('change', (e) => {
     configManager.set('spResultsPerPage', e.target.value);
     currentVirtualPageSize = parseInt(e.target.value, 10) || 20;
@@ -206,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentType = (appStore.selectedGallery && appStore.selectedGallery.galleryId === galleryId) 
                          ? appStore.selectedGallery.galleryType 
                          : 'board';
-    const maxPages = parseInt(pagesSelect.value, 10) || 10;
+    const maxPages = clampPageCount(pagesSelect.value);
     currentVirtualPageSize = parseInt(pageSizeSelect.value, 10) || 20;
     const sortOrder = sortSelect.value || 'newest';
 

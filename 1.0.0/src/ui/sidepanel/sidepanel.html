@@ -70,11 +70,12 @@
             <div class="sp-form-group-row">
               <div class="sp-form-group sp-flex-1">
                 <label for="sp-search-pages" class="sp-label">수집 페이지 수</label>
-                <select id="sp-search-pages" class="sp-select">
-                  <option value="5">5 페이지</option>
-                  <option value="10" selected>10 페이지</option>
-                  <option value="20">20 페이지</option>
-                </select>
+                <input type="number" id="sp-search-pages" class="sp-input" min="1" max="100" step="1" value="10" inputmode="numeric" />
+                <div class="sp-pages-presets" id="sp-search-pages-presets">
+                  <button type="button" class="sp-pages-preset-btn" data-pages="5">5</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="10">10</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="20">20</button>
+                </div>
               </div>
               <div class="sp-form-group sp-flex-1">
                 <label for="sp-results-per-page" class="sp-label">페이지당 결과</label>
