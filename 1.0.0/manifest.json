@@ -5,15 +5,13 @@
   "description": "Production-grade Chrome Extension for DCInside",
   "default_locale": "ko",
   "icons": {
-    "16": "assets/icons/dc_ultimate_icon_transparent.png",
-    "48": "assets/icons/dc_ultimate_icon_transparent.png",
-    "128": "assets/icons/dc_ultimate_icon_transparent.png"
+    "16": "assets/icons/icon.png",
+    "48": "assets/icons/icon.png",
+    "128": "assets/icons/icon.png"
   },
   "permissions": [
     "storage",
     "sidePanel",
-    "activeTab",
-    "tabs",
     "alarms",
     "notifications"
   ],
@@ -54,9 +52,9 @@
     "default_popup": "src/ui/popup/popup.html",
     "default_title": "DC Ultimate",
     "default_icon": {
-      "16": "assets/icons/dc_ultimate_icon_transparent.png",
-      "48": "assets/icons/dc_ultimate_icon_transparent.png",
-      "128": "assets/icons/dc_ultimate_icon_transparent.png"
+      "16": "assets/icons/icon.png",
+      "48": "assets/icons/icon.png",
+      "128": "assets/icons/icon.png"
     }
   },
   "side_panel": {
@@ -66,7 +64,13 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/*",
+        "src/content/*",
+        "src/core/*",
+        "src/features/*",
+        "src/adapters/*",
+        "src/parser/*",
+        "src/utils/*",
+        "src/auth/*",
         "assets/*"
       ],
       "matches": [
