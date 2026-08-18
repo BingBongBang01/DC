@@ -7,6 +7,9 @@ import { userNotesFeature } from '../../features/user-notes-feature.js';
 import { dataManager } from '../../core/data-manager.js';
 import { createSwitch, createSnackbar } from '../components/ui-components.js';
 import { escapeHTML } from '../../utils/sanitizer.js';
+import { messageRouter } from '../../core/message-router.js';
+import { signatureStore } from '../../core/signature/signature-store.js';
+import { MessageAction } from '../../core/message-contract.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -122,6 +125,14 @@ function applyTranslations() {
     }));
   }
 
+  const dcDarkSwContainer = document.getElementById('switch-opt-dcdark');
+  if (dcDarkSwContainer) {
+    dcDarkSwContainer.appendChild(createSwitch('syncDcDarkMode', configManager.get('syncDcDarkMode') !== false, async (checked) => {
+      await configManager.set('syncDcDarkMode', checked);
+      createSnackbar(checked ? 'DC 야간모드 연동을 켰습니다.' : 'DC 야간모드 연동을 껐습니다.');
+    }));
+  }
+
   const autoSigSwContainer = document.getElementById('switch-opt-autosig');
   if (autoSigSwContainer) {
     autoSigSwContainer.appendChild(createSwitch('enableAutoSignature', configManager.get('enableAutoSignature') ?? false, async (checked) => {
@@ -141,8 +152,14 @@ function applyTranslations() {
 
   const loadSavedSigImage = async () => {
     try {
-      const stored = await storageManager.get('autoSignatureImage');
-      const base64 = stored ? stored.autoSignatureImage : null;
+      // 자짤은 이제 여러 장을 관리한다(사이드패널 [작성] 탭). 여기서는 대표 1장만 보여준다.
+      const images = await signatureStore.list();
+      const selectedId = configManager.get('autoSigSelectedId');
+      const preview = images.find(image => image.id === selectedId) || images[0] || null;
+      const base64 = preview ? preview.dataUrl : null;
+      if (sigEmptyText && images.length > 1) {
+        sigEmptyText.textContent = `자짤 ${images.length}장이 등록되어 있습니다. 목록과 적용 방식은 사이드패널 [작성] 탭에서 관리하세요.`;
+      }
       if (base64) {
         if (sigPreviewImg) {
           sigPreviewImg.src = base64;
@@ -188,15 +205,21 @@ function applyTranslations() {
         createSnackbar(t('msg_sig_req'));
         return;
       }
-      await storageManager.set({ autoSignatureImage: pendingSigBase64 });
+      try {
+        await signatureStore.add({ dataUrl: pendingSigBase64 });
+      } catch (err) {
+        createSnackbar(err.message);
+        return;
+      }
       await configManager.set('enableAutoSignature', true);
       createSnackbar(t('msg_sig_saved'));
+      await loadSavedSigImage();
     });
   }
 
   if (btnDeleteSig) {
     btnDeleteSig.addEventListener('click', async () => {
-      await storageManager.set({ autoSignatureImage: null });
+      await signatureStore.clear();
       pendingSigBase64 = null;
       if (sigFileInput) sigFileInput.value = '';
       if (sigPreviewImg) {
@@ -419,4 +442,132 @@ function applyTranslations() {
     await Logger.clearLogs();
     alert(t('msg_logs_cleared'));
   });
+
+  // ---------------------------------------------------------------
+  // DC Auto Login
+  // ---------------------------------------------------------------
+  const loginUserIdInput = document.getElementById('login-user-id');
+  const loginPasswordInput = document.getElementById('login-password');
+  const loginStatusText = document.getElementById('login-status-text');
+  const autoLoginSwContainer = document.getElementById('switch-opt-autologin');
+  const skipPwSwContainer = document.getElementById('switch-opt-skippw');
+
+  const BLOCK_REASON_TEXT = {
+    consecutive_failures: '연속 로그인 실패로 자동 로그인이 중단되었습니다. 계정을 확인한 뒤 다시 저장해 주세요.',
+    captcha_required: '보안문자(캡차)가 표시되어 자동 로그인이 중단되었습니다. 직접 로그인한 뒤 다시 켜 주세요.',
+    manual: '자동 로그인이 수동으로 중단되었습니다.'
+  };
+
+  async function requestAutoLoginStatus(updates) {
+    const res = await messageRouter.send(MessageAction.AUTO_LOGIN_STATUS, updates ? { updates } : {});
+    if (!res || !res.success) {
+      throw new Error(res?.error || '백그라운드 응답 없음');
+    }
+    return res.data.status;
+  }
+
+  function renderAutoLoginStatus(status) {
+    if (!loginStatusText) return;
+
+    if (!status.hasCredentials) {
+      loginStatusText.textContent = '저장된 계정이 없습니다. 아이디와 비밀번호를 입력한 뒤 [저장]을 누르세요.';
+      return;
+    }
+
+    const parts = [`계정 저장됨 (${status.userId})`];
+    parts.push(status.enabled ? '자동 로그인 켜짐' : '자동 로그인 꺼짐');
+    if (status.lastSuccessAt) {
+      parts.push(`최근 로그인: ${new Date(status.lastSuccessAt).toLocaleString('ko-KR')}`);
+    }
+    if (status.blockedReason) {
+      parts.push(BLOCK_REASON_TEXT[status.blockedReason] || status.blockedReason);
+    } else if (status.failures > 0) {
+      parts.push(`연속 실패 ${status.failures}회`);
+    }
+    if (status.lastError) {
+      parts.push(status.lastError);
+    }
+
+    loginStatusText.textContent = parts.join(' · ');
+  }
+
+  if (loginStatusText) {
+    try {
+      const status = await requestAutoLoginStatus();
+
+      if (loginUserIdInput) loginUserIdInput.value = status.userId || '';
+      renderAutoLoginStatus(status);
+
+      if (autoLoginSwContainer) {
+        autoLoginSwContainer.appendChild(createSwitch('autoLoginEnabled', status.enabled, async (checked) => {
+          if (checked) {
+            const current = await requestAutoLoginStatus();
+            if (!current.hasCredentials) {
+              createSnackbar('아이디와 비밀번호를 먼저 저장해 주세요.');
+              renderAutoLoginStatus(current);
+              return;
+            }
+          }
+          // Turning it back on also clears a previous block.
+          const next = await requestAutoLoginStatus({ enabled: checked, blockedReason: null, failures: 0, lastError: null });
+          renderAutoLoginStatus(next);
+          createSnackbar(checked ? '자동 로그인을 켰습니다.' : '자동 로그인을 껐습니다.');
+        }));
+      }
+
+      if (skipPwSwContainer) {
+        skipPwSwContainer.appendChild(createSwitch('skipPasswordChange', status.skipPasswordChange, async (checked) => {
+          const next = await requestAutoLoginStatus({ skipPasswordChange: checked });
+          renderAutoLoginStatus(next);
+        }));
+      }
+    } catch (err) {
+      loginStatusText.textContent = `자동 로그인 상태를 불러오지 못했습니다: ${err.message}`;
+    }
+  }
+
+  document.getElementById('btn-save-login')?.addEventListener('click', async () => {
+    const userId = loginUserIdInput?.value.trim() || '';
+    const password = loginPasswordInput?.value || '';
+
+    if (!userId || !password) {
+      createSnackbar('아이디와 비밀번호를 모두 입력해 주세요.');
+      return;
+    }
+
+    try {
+      const status = await requestAutoLoginStatus({
+        userId,
+        password,
+        failures: 0,
+        blockedReason: null,
+        lastError: null
+      });
+      if (loginPasswordInput) loginPasswordInput.value = '';
+      renderAutoLoginStatus(status);
+      createSnackbar('계정을 저장했습니다.');
+    } catch (err) {
+      createSnackbar(`저장 실패: ${err.message}`);
+    }
+  });
+
+  document.getElementById('btn-clear-login')?.addEventListener('click', async () => {
+    try {
+      const status = await requestAutoLoginStatus({
+        userId: '',
+        password: '',
+        enabled: false,
+        failures: 0,
+        blockedReason: null,
+        lastError: null
+      });
+      if (loginUserIdInput) loginUserIdInput.value = '';
+      if (loginPasswordInput) loginPasswordInput.value = '';
+      renderAutoLoginStatus(status);
+      createSnackbar('저장된 계정을 삭제했습니다.');
+    } catch (err) {
+      createSnackbar(`삭제 실패: ${err.message}`);
+    }
+  });
+
 });

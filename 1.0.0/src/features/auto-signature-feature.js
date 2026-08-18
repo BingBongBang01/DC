@@ -26,6 +26,8 @@ import { BaseFeature } from './base-feature.js';
 import { logger } from '../core/logger.js';
 import { storageManager } from '../core/storage-manager.js';
 import { configManager } from '../core/config-manager.js';
+import { signatureStore } from '../core/signature/signature-store.js';
+import { parseGalleryUrl } from '../core/gallery-context.js';
 
 const BRIDGE_SOURCE = 'dc-ultimate-auto-sig';
 
@@ -95,6 +97,28 @@ export class AutoSignatureFeature extends BaseFeature {
     this._onBridgeMessage = this._onBridgeMessage.bind(this);
     this._pendingUploads = new Map(); // requestId -> { resolve, reject, timeoutId }
     this._quickPasteSetup = false;
+  }
+
+  /**
+   * 현재 글쓰기 페이지가 속한 갤러리 ID (갤러리별 자짤 결정에 사용).
+   * @returns {string}
+   */
+  _currentGalleryId() {
+    if (typeof window === 'undefined') return '';
+    const context = parseGalleryUrl(window.location.href);
+    return context && context.valid ? context.galleryId : '';
+  }
+
+  /**
+   * @param {number} count 등록된 자짤 수
+   * @returns {string}
+   */
+  _modeLabel(count) {
+    const mode = configManager.get('autoSigMode') || 'random';
+    if (count <= 1) return '자짤 1개';
+    if (mode === 'single') return '지정 1개 사용';
+    if (mode === 'gallery') return '갤러리별 자짤';
+    return `랜덤 (${count}개)`;
   }
 
   async onEnable() {
@@ -176,16 +200,18 @@ export class AutoSignatureFeature extends BaseFeature {
 
     // Fetch initial state
     const isEnabled = configManager.get('enableAutoSignature') ?? false;
-    const sigData = await storageManager.get('autoSignatureImage');
-    const hasSig = sigData && sigData.autoSignatureImage;
+    const activeImage = await signatureStore.pickFor(this._currentGalleryId());
+    const images = await signatureStore.list();
+    const hasSig = Boolean(activeImage);
+    const modeLabel = this._modeLabel(images.length);
 
     container.innerHTML = `
       <div class="sig-ui-left">
-        <img class="sig-preview-thumb" src="${hasSig ? sigData.autoSignatureImage : ''}" style="display: ${hasSig ? 'block' : 'none'};" alt="자짤">
+        <img class="sig-preview-thumb" src="${hasSig ? activeImage.dataUrl : ''}" style="display: ${hasSig ? 'block' : 'none'};" alt="자짤">
         <div class="sig-icon-placeholder" style="display: ${hasSig ? 'none' : 'flex'};">🎨</div>
         <div class="sig-text-wrap">
-          <div class="sig-title">자짤 빠른 설정 구역</div>
-          <div class="sig-subtitle">이곳에 이미지를 드래그 앤 드롭하거나 붙여넣기(Ctrl+V) 하세요.</div>
+          <div class="sig-title">자짤 빠른 설정 구역 <span class="sig-mode-chip">${modeLabel}</span></div>
+          <div class="sig-subtitle">${hasSig ? `이번 글에는 <b>${(activeImage.name || '자짤').replace(/[<>&]/g, '')}</b> 자짤이 첨부됩니다. 새 이미지를 드래그 앤 드롭하거나 붙여넣기(Ctrl+V) 하면 목록에 추가됩니다.` : '이곳에 이미지를 드래그 앤 드롭하거나 붙여넣기(Ctrl+V) 하세요.'}</div>
         </div>
       </div>
       <div class="sig-controls" title="자짤 자동 첨부 기능을 켜거나 끕니다">
@@ -229,7 +255,14 @@ export class AutoSignatureFeature extends BaseFeature {
       const reader = new FileReader();
       reader.onload = async (evt) => {
         const base64 = evt.target.result;
-        await storageManager.set({ autoSignatureImage: base64 });
+        let added = null;
+        try {
+          added = await signatureStore.add({ dataUrl: base64, name: imageFile.name || '' });
+        } catch (addErr) {
+          subtitle.textContent = `❌ ${addErr.message}`;
+          container.classList.add('error');
+          return;
+        }
         
         // Auto-enable if user sets an image
         if (!checkbox.checked) {
@@ -244,16 +277,17 @@ export class AutoSignatureFeature extends BaseFeature {
         placeholder.style.display = 'none';
 
         // Feedback
-        subtitle.textContent = '✅ 자짤 등록이 완료되어 본문에 삽입되었습니다!';
+        const total = (await signatureStore.list()).length;
+        subtitle.textContent = `✅ 자짤 목록에 추가했습니다 (총 ${total}개). 이번 글에는 방금 추가한 자짤을 첨부합니다.`;
         container.classList.add('success');
-        
-        // Insert
+
+        // 붙여넣은 이미지는 모드와 무관하게 이번 글에 그대로 첨부한다.
         this._inserted = false;
-        this.tryAttachSignature();
+        this.tryAttachSignature(added);
 
         setTimeout(() => {
           container.classList.remove('success');
-          subtitle.textContent = '다른 이미지로 변경하려면 끌어다 놓거나 붙여넣기 하세요.';
+          subtitle.textContent = '이미지를 끌어다 놓거나 붙여넣으면 자짤 목록에 추가됩니다. 목록·모드 관리는 사이드패널 [작성] 탭에서 할 수 있습니다.';
         }, 3000);
       };
       reader.readAsDataURL(imageFile);
@@ -467,19 +501,25 @@ export class AutoSignatureFeature extends BaseFeature {
     }
   }
 
-  async tryAttachSignature() {
+  /**
+   * @param {Object|null} [forcedImage] 모드를 무시하고 첨부할 자짤 (붙여넣기 직후)
+   */
+  async tryAttachSignature(forcedImage = null) {
     if (!this.enabled || !this.isWritePage()) return;
     const isConfigEnabled = configManager.get('enableAutoSignature');
     if (!isConfigEnabled) return;
 
     try {
-      const sigData = await storageManager.get('autoSignatureImage');
-      const rawBase64 = sigData ? sigData.autoSignatureImage : null;
+      const galleryId = this._currentGalleryId();
+      const image = forcedImage || await signatureStore.pickFor(galleryId);
+      const rawBase64 = image ? image.dataUrl : null;
 
       if (!rawBase64) {
         logger.debug('AutoSignatureFeature: No signature image saved in storage.');
         return;
       }
+
+      logger.info(`AutoSignatureFeature: using signature [${image.name}] (mode=${configManager.get('autoSigMode') || 'random'}${galleryId ? `, gallery=${galleryId}` : ''}).`);
 
       this._inserted = false;
 

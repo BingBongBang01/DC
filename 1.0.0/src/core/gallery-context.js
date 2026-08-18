@@ -15,8 +15,44 @@
  */
 
 /**
+ * Two vocabularies for the same three gallery kinds live in this codebase:
+ * URL-shaped (`board` / `mgallery` / `mini`, produced by parseGalleryUrl and
+ * stored on Keyword Alerts) and legacy parser-shaped (`major` / `minor` /
+ * `mini`, expected by QueryBuilder and PageDetector). Normalizing before URL
+ * construction keeps a minor gallery from silently being fetched as a major
+ * one, which returns the wrong list (or none at all).
+ * @param {string|null|undefined} type
+ * @returns {"major" | "minor" | "mini"}
+ */
+export function normalizeGalleryType(type) {
+  switch (String(type || '').toLowerCase()) {
+    case 'minor':
+    case 'mgallery':
+      return 'minor';
+    case 'mini':
+      return 'mini';
+    default:
+      return 'major';
+  }
+}
+
+/**
+ * Builds a gallery list page URL for either gallery-type vocabulary.
+ * @param {string} galleryId
+ * @param {string} galleryType
+ * @param {number} [page=1]
+ * @returns {string}
+ */
+export function buildGalleryListUrl(galleryId, galleryType, page = 1) {
+  const normalized = normalizeGalleryType(galleryType);
+  const prefix = normalized === 'minor' ? '/mgallery' : normalized === 'mini' ? '/mini' : '';
+  const params = new URLSearchParams({ id: String(galleryId || ''), page: String(page || 1) });
+  return `https://gall.dcinside.com${prefix}/board/lists/?${params.toString()}`;
+}
+
+/**
  * Parses a raw URL into a canonical GalleryContext.
- * @param {string} rawUrl 
+ * @param {string} rawUrl
  * @returns {GalleryContext}
  */
 export function parseGalleryUrl(rawUrl) {

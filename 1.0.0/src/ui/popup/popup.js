@@ -44,6 +44,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }));
   }
 
+  // Theme mode (라이트 / 다크 / 시스템) — also drives DCInside's 야간모드
+  const themeButtons = document.querySelectorAll('.theme-mode-btn');
+  const markActiveTheme = (mode) => {
+    themeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+  };
+  markActiveTheme(configManager.get('theme') || 'system');
+
+  themeButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const mode = btn.dataset.mode;
+      themeSystem.applyTheme(mode);
+      markActiveTheme(mode);
+      // Open DC tabs pick this up through chrome.storage.onChanged.
+      await configManager.set('theme', mode);
+    });
+  });
+
+  const dcDarkSwitchWrapper = document.getElementById('switch-dc-dark');
+  if (dcDarkSwitchWrapper) {
+    dcDarkSwitchWrapper.appendChild(createSwitch('syncDcDarkMode', configManager.get('syncDcDarkMode') !== false, async (checked) => {
+      await configManager.set('syncDcDarkMode', checked);
+    }));
+  }
+
   // Options page button
   document.getElementById('btn-options')?.addEventListener('click', () => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {

@@ -141,3 +141,29 @@ body {
 .btn-primary:hover {
   opacity: 0.9;
 }
+
+/* Theme mode segmented control */
+.theme-mode-group {
+  display: flex;
+  gap: 4px;
+}
+.theme-mode-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline, #555);
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #eee);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.theme-mode-btn:hover {
+  border-color: var(--md-sys-color-primary, #6c8cff);
+}
+.theme-mode-btn.active {
+  background: var(--md-sys-color-primary, #6c8cff);
+  border-color: var(--md-sys-color-primary, #6c8cff);
+  color: var(--md-sys-color-on-primary, #fff);
+}

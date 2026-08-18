@@ -21,6 +21,17 @@ import { commentToolsFeature } from '../features/comment-tools-feature.js';
 import { mediaToolsFeature } from '../features/media-tools-feature.js';
 import { aiFeature } from '../features/ai-feature.js';
 import { autoSignatureFeature } from '../features/auto-signature-feature.js';
+import { userBlockFeature } from '../features/user-block-feature.js';
+import { spamFilterFeature } from '../features/spam-filter-feature.js';
+import { hotHighlightFeature } from '../features/hot-highlight-feature.js';
+import { infiniteScrollFeature } from '../features/infinite-scroll-feature.js';
+import { draftAutosaveFeature } from '../features/draft-autosave-feature.js';
+import { dcconFavoritesFeature } from '../features/dccon-favorites-feature.js';
+import { markdownCodeFeature } from '../features/markdown-code-feature.js';
+import { archiveCacheFeature } from '../features/archive-cache-feature.js';
+import { archiveCaptureFeature } from '../features/archive-capture-feature.js';
+import { commentTreeFeature } from '../features/comment-tree-feature.js';
+import { userAnalyticsFeature } from '../features/user-analytics-feature.js';
 
 // Parsers & Adapters
 import { pageDetector } from '../parser/page-detector.js';
@@ -29,6 +40,7 @@ import { postDetector } from './detectors/post-detector.js';
 import { MessageAction } from '../core/message-contract.js';
 import { domObserver } from '../adapters/dom-observer.js';
 import { authManager } from '../auth/auth-manager.js';
+import { loginAutomation } from '../auth/login-automation.js';
 import { articleParser } from '../parser/article-parser.js';
 import { commentParser } from '../parser/comment-parser.js';
 import { SELECTORS } from '../adapters/selectors.js';
@@ -49,6 +61,38 @@ async function runPhase(name, fn) {
   }
 }
 
+/**
+ * Re-applies the DOM-mutating list features (block / spam / highlight) plus the
+ * dccon bar. Called after page detection and whenever new rows appear.
+ * @param {Object} pageInfo
+ */
+function applyListFeatures(pageInfo) {
+  for (const feature of [userBlockFeature, spamFilterFeature, hotHighlightFeature]) {
+    try {
+      if (!feature.enabled) continue;
+      if (pageInfo) feature.onPageChange(pageInfo);
+      else feature.apply();
+    } catch (err) {
+      logger.warn(`Content Script: feature [${feature.id}] failed to apply:`, err);
+    }
+  }
+
+  try {
+    if (dcconFavoritesFeature.enabled) dcconFavoritesFeature.renderBar();
+  } catch (err) {
+    logger.debug('Content Script: dccon bar render failed:', err);
+  }
+
+  // 댓글은 본문 로드 후 비동기로 붙으므로 변경마다 다시 처리한다.
+  try {
+    if (commentTreeFeature.enabled) commentTreeFeature.apply();
+    if (archiveCaptureFeature.enabled) archiveCaptureFeature.mountButton();
+    if (archiveCacheFeature.enabled) archiveCacheFeature.captureSoon();
+  } catch (err) {
+    logger.debug('Content Script: archive/comment pass failed:', err);
+  }
+}
+
 async function initContentEngine() {
   // --- 0. 메시지 핸들러는 가장 먼저, 무조건 등록 ---
   if (typeof chrome !== 'undefined' && chrome.runtime) {
@@ -56,6 +100,16 @@ async function initContentEngine() {
       if (message && message.type === 'GET_CURRENT_GALLERY_CONTEXT') {
         const galleryInfo = GalleryDetector.detect();
         sendResponse({ payload: galleryInfo });
+        return false;
+      }
+
+      // Side Panel edited shared data — re-apply without a reload.
+      if (message && message.type === MessageAction.USER_RULES_CHANGED) {
+        userBlockFeature.refreshRules().catch(err => logger.warn('User rules refresh failed:', err));
+        return false;
+      }
+      if (message && message.type === MessageAction.DCCON_CHANGED) {
+        dcconFavoritesFeature.refresh().catch(err => logger.warn('Dccon refresh failed:', err));
         return false;
       }
     });
@@ -99,12 +153,27 @@ async function initContentEngine() {
     featureManager.register(mediaToolsFeature);
     featureManager.register(aiFeature);
     featureManager.register(autoSignatureFeature);
+    featureManager.register(userBlockFeature);
+    featureManager.register(spamFilterFeature);
+    featureManager.register(hotHighlightFeature);
+    featureManager.register(infiniteScrollFeature);
+    featureManager.register(draftAutosaveFeature);
+    featureManager.register(dcconFavoritesFeature);
+    featureManager.register(markdownCodeFeature);
+    featureManager.register(archiveCacheFeature);
+    featureManager.register(archiveCaptureFeature);
+    featureManager.register(commentTreeFeature);
+    featureManager.register(userAnalyticsFeature);
     await featureManager.init();
   });
 
-  await runPhase('auth', () => {
+  await runPhase('auth', async () => {
     authState = authManager.detectUser(document);
     logger.info('Content Script: Session Auth State:', authState.state);
+
+    // Auto login runs before the heavier feature phases so a signed-out page
+    // is redirected to the login form as early as possible.
+    await loginAutomation.run(document, window.location.href);
   });
 
   await runPhase('pageDetect', async () => {
@@ -126,6 +195,7 @@ async function initContentEngine() {
     }
 
     applyDOMFilters();
+    applyListFeatures(currentPageInfo);
     postDetector.start(currentPageInfo); // Start observing for Keyword Alerts
 
     await eventBus.emit('page:detected', currentPageInfo);
@@ -137,7 +207,10 @@ async function initContentEngine() {
 
   await runPhase('domObserver', () => {
     domObserver.observe(document);
-    eventBus.on('dom:articles_added', () => applyDOMFilters());
+    eventBus.on('dom:articles_added', () => {
+      applyDOMFilters();
+      applyListFeatures(currentPageInfo);
+    });
   });
 
   await runPhase('adStyles', () => {

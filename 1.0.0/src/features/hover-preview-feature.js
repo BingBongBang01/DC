@@ -146,6 +146,13 @@ export class HoverPreviewFeature extends BaseFeature {
     const safeTitle = escapeHTML(article.title);
     const safeAuthor = escapeHTML(article.author || '익명');
     const safeBody = escapeHTML(article.body ? article.body.substring(0, 200) + '...' : '본문 텍스트가 없습니다.');
+
+    // 첨부 이미지는 텍스트 안내 대신 실제 썸네일로 보여준다.
+    const thumbs = (article.media || [])
+      .filter(item => item && item.url && (item.type === 'image' || item.type === 'gif'))
+      .slice(0, 4)
+      .map(item => `<img class="dcu-preview-thumb" src="${escapeHTML(item.url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`)
+      .join('');
     const safeIp = article.ip ? `(${escapeHTML(article.ip)})` : '';
 
     modal.innerHTML = `
@@ -156,7 +163,9 @@ export class HoverPreviewFeature extends BaseFeature {
       <div style="color:#334155; max-height:120px; overflow:hidden; text-overflow:ellipsis;">
         ${safeBody}
       </div>
-      ${article.hasImage ? '<div style="margin-top:6px; font-size:11px; color:#059669;">📷 이미지 첨부됨</div>' : ''}
+      ${thumbs
+        ? `<div class="dcu-preview-thumbs">${thumbs}</div>`
+        : (article.hasImage ? '<div style="margin-top:6px; font-size:11px; color:#059669;">📷 이미지 첨부됨</div>' : '')}
     `;
 
     modal.addEventListener('mouseleave', () => this.closePreview());

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DC Ultimate",
-  "version": "1.0.0",
-  "description": "Production-grade Chrome Extension for DCInside",
+  "version": "2.0.0",
+  "description": "DCInside 브라우징 강화 확장 — 검색 수집, 키워드 알림, 유저 차단/분석, 아카이브 박제, 작성 도우미",
   "default_locale": "ko",
   "icons": {
     "16": "assets/icons/dc_ultimate_icon_transparent.png",
@@ -25,6 +25,15 @@
     "type": "module"
   },
   "content_scripts": [
+    {
+      "matches": [
+        "*://*.dcinside.com/*"
+      ],
+      "js": [
+        "src/content/dc-dark-sync.js"
+      ],
+      "run_at": "document_start"
+    },
     {
       "matches": [
         "*://*.dcinside.com/*"

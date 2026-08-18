@@ -2,6 +2,7 @@
  * QueryBuilder Module for DC Ultimate Search Engine
  * Construct structured search queries and URL parameters safely without raw string concatenation
  */
+import { normalizeGalleryType } from '../gallery-context.js';
 
 export class SearchQuery {
   constructor(data = {}) {
@@ -38,10 +39,14 @@ export class QueryBuilder {
    * @returns {string}
    */
   buildUrl(query, pageNum = 1) {
+    // Callers hand us either vocabulary ('minor' from PageDetector, 'mgallery'
+    // from GalleryContext / Keyword Alerts), so normalize before branching.
+    const galleryType = normalizeGalleryType(query.galleryType);
+
     let baseUrl = 'https://gall.dcinside.com/board/lists/';
-    if (query.galleryType === 'minor') {
+    if (galleryType === 'minor') {
       baseUrl = 'https://gall.dcinside.com/mgallery/board/lists/';
-    } else if (query.galleryType === 'mini') {
+    } else if (galleryType === 'mini') {
       baseUrl = 'https://gall.dcinside.com/mini/board/lists/';
     }
 

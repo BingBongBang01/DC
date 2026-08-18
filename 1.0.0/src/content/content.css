@@ -180,3 +180,441 @@
   .sig-controls { border-left-color: rgba(255,255,255,0.1); }
   .sig-slider { background-color: #4b5563; }
 }
+
+/* =========================================================
+   DC Ultimate — 유저 차단 / 도배 필터 / 화제글 / 작성 편의
+   ========================================================= */
+
+/* 메모 라벨 */
+.dcu-memo-label {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #f59e0b;
+  color: #1f2937;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: middle;
+}
+
+/* 차단 블라인드 */
+.dcu-blind-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.dcu-blind-cell { background: rgba(107, 114, 128, 0.08); }
+.dcu-blind-text { flex: 1; }
+.dcu-blind-toggle,
+.dcu-spam-toggle {
+  padding: 2px 8px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-blind-toggle:hover,
+.dcu-spam-toggle:hover { background: rgba(156, 163, 175, 0.2); }
+
+/* 도배 필터 요약 줄 */
+.dcu-spam-summary td {
+  padding: 6px 8px !important;
+  text-align: center;
+  background: rgba(59, 130, 246, 0.06);
+}
+.dcu-spam-reason {
+  margin-left: 6px;
+  color: #ef4444;
+  font-size: 11px;
+}
+
+/* 화제 글 하이라이트 */
+tr.ub-content.dcu-hot { background: rgba(245, 158, 11, 0.12) !important; }
+tr.ub-content.dcu-hot-blazing { background: rgba(239, 68, 68, 0.16) !important; }
+.dcu-hot-badge { margin-right: 4px; font-size: 12px; }
+
+/* 무한 스크롤 */
+.dcu-infinite-sentinel {
+  padding: 12px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  min-height: 20px;
+}
+.dcu-page-divider td {
+  padding: 4px 8px !important;
+  text-align: center;
+  font-size: 11px;
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.08);
+}
+
+/* 임시저장 */
+.dcu-draft-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  font-size: 12px;
+}
+.dcu-draft-actions button {
+  margin-left: 4px;
+  padding: 3px 10px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-draft-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483000;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.85);
+  color: #f9fafb;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.dcu-draft-toast.visible { opacity: 1; }
+
+/* 디시콘 즐겨찾기 */
+.dcu-dccon-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.dcu-dccon-item {
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.dcu-dccon-item:hover { border-color: #3b82f6; }
+.dcu-dccon-item img { width: 40px; height: 40px; object-fit: contain; display: block; }
+
+.dcu-dccon-palette {
+  position: absolute;
+  z-index: 2147483000;
+  display: none;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-100%);
+}
+.dcu-dccon-palette.visible { display: block; }
+.dcu-dccon-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+.dcu-dccon-suggestion img { width: 32px; height: 32px; object-fit: contain; }
+.dcu-dccon-suggestion:hover,
+.dcu-dccon-suggestion.active { background: rgba(59, 130, 246, 0.12); }
+
+/* 마크다운 / 코드 하이라이팅 */
+.dcu-md-toolbar,
+.dcu-md-write-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.dcu-md-toggle,
+.dcu-md-convert,
+.dcu-code-copy {
+  padding: 3px 10px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-md-hint { color: #6b7280; }
+
+.dcu-code-block { margin: 12px 0; }
+.dcu-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 6px 6px 0 0;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-size: 11px;
+}
+.dcu-md-pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 0 0 6px 6px;
+  background: #111827;
+  color: #e5e7eb;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+}
+.dcu-md-pre code { font-family: inherit; }
+.dcu-tok-keyword { color: #93c5fd; font-weight: 600; }
+.dcu-tok-string  { color: #86efac; }
+.dcu-tok-comment { color: #9ca3af; font-style: italic; }
+.dcu-tok-number  { color: #fca5a5; }
+.dcu-tok-punct   { color: #d1d5db; }
+
+.dcu-md-rendered { line-height: 1.7; }
+.dcu-md-rendered .dcu-md-h { margin: 12px 0 6px; font-weight: 700; }
+.dcu-md-rendered .dcu-md-list { margin: 6px 0 6px 20px; list-style: revert; }
+.dcu-md-rendered .dcu-md-quote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 3px solid #9ca3af;
+  color: #6b7280;
+}
+.dcu-md-rendered .dcu-md-code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(107, 114, 128, 0.2);
+  font-family: Consolas, Monaco, monospace;
+}
+.dcu-md-hr { margin: 12px 0; border: 0; border-top: 1px solid #d1d5db; }
+.dcu-md-lang { display: block; margin-bottom: 6px; color: #9ca3af; font-size: 11px; }
+
+/* =========================================================
+   DC Ultimate — 아카이브 / 댓글 트리 / 유저 분석 (Phase 22)
+   ========================================================= */
+
+/* 호버 미리보기 썸네일 */
+.dcu-preview-thumbs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.dcu-preview-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: rgba(107, 114, 128, 0.15);
+}
+
+/* 박제 바 */
+.dcu-archive-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  font-size: 12px;
+}
+.dcu-archive-bar-title { font-weight: 700; color: #3b82f6; }
+.dcu-archive-btn {
+  padding: 3px 10px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-archive-btn:hover { background: rgba(59, 130, 246, 0.15); }
+.dcu-archive-result { font-size: 11px; color: #059669; }
+.dcu-archive-result.error { color: #ef4444; }
+
+/* 캐시 복구 박스 */
+.dcu-archive-restore {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+}
+.dcu-archive-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+.dcu-archive-tag {
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: #f59e0b;
+  color: #1f2937;
+  font-weight: 700;
+}
+.dcu-archive-time { color: #6b7280; }
+.dcu-archive-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.dcu-archive-meta { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+.dcu-archive-body { white-space: pre-wrap; line-height: 1.6; font-size: 13px; }
+.dcu-archive-body.dim { color: #9ca3af; }
+.dcu-archive-media { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.dcu-archive-media img { max-width: 160px; max-height: 160px; border-radius: 6px; }
+.dcu-archive-subtitle { margin-top: 10px; font-size: 12px; font-weight: 700; }
+.dcu-archive-comments { margin: 8px 0; }
+.dcu-archive-toggle {
+  padding: 4px 10px;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-archive-comments-list { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.dcu-archive-comments-list.hidden { display: none; }
+.dcu-archive-comment {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(107, 114, 128, 0.1);
+  font-size: 12px;
+}
+.dcu-archive-comment b { margin-right: 4px; }
+.dcu-archive-comment i { margin-left: 6px; color: #9ca3af; font-size: 11px; font-style: normal; }
+
+/* 댓글 트리 / 글쓴이 */
+.dcu-cmt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.dcu-cmt-btn {
+  padding: 3px 10px;
+  border: 1px solid #6366f1;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-cmt-btn:hover { background: rgba(99, 102, 241, 0.15); }
+.dcu-cmt-count { color: #6b7280; }
+li.dcu-cmt-child {
+  border-left: 2px solid rgba(99, 102, 241, 0.35);
+  padding-left: 8px !important;
+}
+li.dcu-cmt-author { background: rgba(16, 185, 129, 0.08); }
+.dcu-cmt-author-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #10b981;
+  color: #06251b;
+  font-size: 10px;
+  font-weight: 700;
+}
+li.dcu-cmt-hidden { display: none !important; }
+
+/* 유저 분석 팝오버 */
+.dcu-analytics-popover {
+  position: absolute;
+  z-index: 2147483000;
+  width: 320px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  font-size: 12px;
+}
+.darkmode .dcu-analytics-popover { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+.dcu-analytics-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.dcu-analytics-head b { font-size: 13px; }
+.dcu-analytics-head span { flex: 1; font-size: 11px; color: #6b7280; }
+.dcu-analytics-close {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dcu-analytics-stats { display: flex; gap: 8px; margin-bottom: 8px; }
+.dcu-analytics-stats > div {
+  flex: 1;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(107, 114, 128, 0.12);
+  text-align: center;
+}
+.dcu-analytics-stats b { display: block; font-size: 14px; }
+.dcu-analytics-stats span { font-size: 10px; color: #6b7280; }
+.dcu-analytics-hours {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 46px;
+  margin-bottom: 8px;
+}
+.dcu-hour { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.dcu-hour-bar { width: 100%; background: #6366f1; border-radius: 2px 2px 0 0; min-height: 1px; }
+.dcu-hour span { font-size: 8px; color: #9ca3af; }
+.dcu-analytics-meta { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.dcu-analytics-warn {
+  margin: 4px 0;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 11px;
+}
+.dcu-analytics-list { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+.dcu-analytics-list a { font-size: 11px; color: #3b82f6; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dcu-analytics-actions { display: flex; gap: 4px; margin-top: 8px; }
+.dcu-analytics-btn {
+  flex: 1;
+  padding: 4px;
+  border: 1px solid #6366f1;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dcu-analytics-status { margin-top: 6px; font-size: 11px; color: #059669; }
+.dcu-analytics-loading { padding: 10px; text-align: center; color: #6b7280; }

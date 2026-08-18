@@ -1,5 +1,5 @@
 /**
- * Complete Automated Unit Test Suite Runner for DC Ultimate (Phases 1-19 Complete Suite)
+ * Complete Automated Unit Test Suite Runner for DC Ultimate (Phases 1-22 Complete Suite)
  */
 import './test-env.js';
 import { runCoreTests } from './core.test.js';
@@ -19,10 +19,14 @@ import { runPhase17PerformanceQATests } from './phase17.test.js';
 import { runPhase18SecurityQATests } from './phase18.test.js';
 import { runPhase19E2EQATests } from './phase19.test.js';
 import { runAutomationTests } from './automation.test.js';
+import { runKeywordAlertTests } from './keyword-alert.test.js';
+import { runAutoLoginTests } from './auto-login.test.js';
+import { runPhase21Tests } from './phase21.test.js';
+import { runPhase22Tests } from './phase22.test.js';
 
 async function main() {
   console.log('===========================================================');
-  console.log('  DC Ultimate Complete Production Test Suite (Phases 1-19)');
+  console.log('  DC Ultimate Complete Production Test Suite (Phases 1-22)');
   console.log('===========================================================\n');
 
   try {
@@ -59,6 +63,14 @@ async function main() {
     await runPhase19E2EQATests();
     console.log('');
     await runAutomationTests();
+    console.log('');
+    await runKeywordAlertTests();
+    console.log('');
+    await runAutoLoginTests();
+    console.log('');
+    await runPhase21Tests();
+    console.log('');
+    await runPhase22Tests();
 
     console.log('\n===========================================================');
     console.log('  🎉 ALL PHASE 1 THROUGH PHASE 19 TESTS PASSED SUCCESSFULLY!');

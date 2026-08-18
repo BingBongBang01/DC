@@ -4,6 +4,7 @@
  */
 import { User } from '../utils/models.js';
 import { logger } from '../core/logger.js';
+import { AUTH_STATE, detectAuthState } from './dc-login-page.js';
 
 export const AUTH_STATES = {
   LOGGED_IN: 'Logged in',
@@ -30,9 +31,12 @@ export class AuthManager {
     }
 
     try {
-      const loginBox = doc.querySelector('.login_box, #login_box, .user_option');
       const nicknameElem = doc.querySelector('.user_info .nickname, .login_box .user_name, .nick_name');
       const isManagerElem = doc.querySelector('.icon_gallmanager, .icon_submanager');
+
+      // The header's login/logout anchor is the reliable signal on live DC
+      // pages; the nickname markup differs between gallery skins.
+      const headerState = detectAuthState(doc);
 
       if (nicknameElem) {
         const nickname = nicknameElem.textContent.trim();
@@ -42,7 +46,10 @@ export class AuthManager {
           isGalleryManager: Boolean(isManagerElem)
         });
         this.authState = AUTH_STATES.LOGGED_IN;
-      } else if (loginBox) {
+      } else if (headerState === AUTH_STATE.LOGGED_IN) {
+        this.currentUser = new User({ isMember: true, isGalleryManager: Boolean(isManagerElem) });
+        this.authState = AUTH_STATES.LOGGED_IN;
+      } else if (headerState === AUTH_STATE.LOGGED_OUT || doc.querySelector('.login_box, #login_box, .user_option')) {
         this.currentUser = new User({ isMember: false });
         this.authState = AUTH_STATES.LOGGED_OUT;
       } else {

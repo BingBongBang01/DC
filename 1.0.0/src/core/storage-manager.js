@@ -6,12 +6,13 @@ import { logger } from './logger.js';
 import { eventBus } from './event-bus.js';
 import { compareVersions } from '../utils/version-compare.js';
 
-export const CURRENT_SCHEMA_VERSION = '1.0.0';
+export const CURRENT_SCHEMA_VERSION = '2.0.0';
 
 export const INITIAL_STORAGE_SCHEMA = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   settings: {
     theme: 'system', // 'light', 'dark', 'system'
+    syncDcDarkMode: true, // Mirror the extension theme onto DCInside's 야간모드
     autoRefreshInterval: 0, // 0 = disabled
     testFeature: true,
     enableHoverPreview: true,
@@ -26,8 +27,46 @@ export const INITIAL_STORAGE_SCHEMA = {
     enableAIFeatures: true,
     enableCleanUI: false,
     soundNotifications: false,
-    enableAutoSignature: false
+    enableAutoSignature: false,
+
+    // Phase 21: 유저 차단 / 도배 필터 / 작성 편의 / 목록 보기
+    enableUserBlock: true,
+    enableSpamFilter: true,
+    enableDraftAutosave: true,
+    enableDcconFavorites: true,
+    enableMarkdownCode: true,
+    enableInfiniteScroll: true,
+    enableHotHighlight: true,
+    spamDuplicateThreshold: 3,
+    spamSpecialCharRatio: 0.6,
+    spamRepeatedCharRun: 6,
+    spamPatterns: [],
+    hotRecommendThreshold: 10,
+    hotCommentThreshold: 20,
+    hotBlazingMultiplier: 3,
+    infiniteScrollMaxPages: 10,
+    draftAutosaveIntervalSec: 10,
+    markdownRenderPosts: true,
+    spActiveView: 'search',
+
+    // 자짤(자동 첨부) 다중 이미지
+    autoSigMode: 'random', // 'random' | 'single' | 'gallery'
+    autoSigSelectedId: null,
+    autoSigGalleryMap: {},
+
+    // Phase 22: 아카이빙 / 가독성 / 유저 분석
+    enableArchiveCache: true,
+    enableArchiveCapture: true,
+    enableCommentTree: true,
+    enableUserAnalytics: true,
+    commentTreeEnabled: true,
+    archiveDefaultMode: 'cache', // 'cache' | 'image' | 'pdf' | 'archive-today'
+    analyticsSampleSize: 200
   },
+  dc_auto_sig_images: [],
+  dc_user_rules: [],
+  dc_dccon_favorites: [],
+  dc_drafts: {},
   autoSignatureImage: null,
   galleryProfiles: {},
   filters: {
@@ -92,6 +131,22 @@ export class StorageManager {
         upTo: '1.0.0',
         migrate: (data) => {
           return data;
+        }
+      },
+      {
+        // 2.0.0: 새 기능 기본값을 채우고, 단일 자짤을 목록형으로 옮길 자리를
+        // 마련한다(실제 이관은 SignatureStore가 처음 읽을 때 수행).
+        upTo: '2.0.0',
+        migrate: (data) => {
+          const settings = { ...INITIAL_STORAGE_SCHEMA.settings, ...(data.settings || {}) };
+          return {
+            ...data,
+            settings,
+            dc_user_rules: Array.isArray(data.dc_user_rules) ? data.dc_user_rules : [],
+            dc_dccon_favorites: Array.isArray(data.dc_dccon_favorites) ? data.dc_dccon_favorites : [],
+            dc_auto_sig_images: Array.isArray(data.dc_auto_sig_images) ? data.dc_auto_sig_images : [],
+            dc_drafts: data.dc_drafts && typeof data.dc_drafts === 'object' ? data.dc_drafts : {}
+          };
         }
       }
     ];
