@@ -107,6 +107,9 @@ export class SpamFilterFeature extends BaseFeature {
     if (!this.summaryRow || !this.summaryRow.isConnected) {
       this.summaryRow = document.createElement('tr');
       this.summaryRow.className = 'dcu-spam-summary';
+    }
+    // 무한 스크롤이 뒤에 행을 붙이므로 매번 마지막으로 옮겨 준다.
+    if (this.summaryRow.nextElementSibling || !this.summaryRow.isConnected) {
       tbody.appendChild(this.summaryRow);
     }
 

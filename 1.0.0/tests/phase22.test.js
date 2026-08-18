@@ -99,6 +99,13 @@ export async function runPhase22Tests() {
   assert.deepStrictEqual(tree.map(node => node.id), ['1', '2', '3', '4', '5'], '트리 순서로 평탄화');
   assert.strictEqual(tree.find(node => node.id === '1').childCount, 1);
 
+  // 디시가 답글 대상 닉네임을 따로 줄 때(본문에 @가 없어도) 트리에 반영된다
+  const withTargetNick = buildCommentTree([
+    { id: '1', author: '갑', content: '첫 댓글' },
+    { id: '2', author: '을', content: '본문에는 @가 없다', replyToNick: '갑' }
+  ]);
+  assert.strictEqual(withTargetNick.find(n => n.id === '2').depth, 1, 'replyToNick으로도 부모를 찾는다');
+
   // 자기 자신을 부모로 지정해도 순환하지 않는다
   const selfRef = buildCommentTree([{ id: '1', author: '갑', content: 'x', parentId: '1' }]);
   assert.strictEqual(selfRef[0].depth, 0);

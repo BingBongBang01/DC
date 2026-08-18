@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const serviceTiles = document.querySelectorAll('.sp-tile');
   const serviceViews = document.querySelectorAll('.sp-view');
 
+  // 알림 목록 렌더 함수는 이 아래에서 선언되는 const(pendingDeletes 등)를 쓰기 때문에
+  // 초기화가 끝나기 전에는 호출하면 안 된다. 준비되면 아래에서 true로 바꾼다.
+  let panelReady = false;
+
   /**
    * Shows one service view and remembers it for the next time the panel opens.
    * @param {string} view data-view key
@@ -86,8 +90,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // The panel body scrolls per view; start each one at the top.
     document.querySelector('.sp-main')?.scrollTo({ top: 0 });
 
-    // 방금 연 서비스만 즉시 최신화한다.
-    if (target === 'alerts' && typeof renderNotifications === 'function') {
+    // 방금 연 서비스만 즉시 최신화한다(초기화 완료 후에만).
+    if (panelReady && target === 'alerts') {
       renderKeywordAlerts();
       renderNotifications();
     }
@@ -1518,6 +1522,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     await messageRouter.send(MessageAction.ARCHIVE_CLEAR, { galleryId });
     setStatus('sp-archive-status', `${galleryId} 갤러리 보관함을 비웠습니다.`);
     renderArchiveStats();
+
+  // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
+  panelReady = true;
+  const restoredView = configManager.get('spActiveView') || 'search';
+  if (restoredView === 'alerts') {
+    renderKeywordAlerts();
+    renderNotifications();
+  }
   });
 
   document.getElementById('sp-archive-clear-all')?.addEventListener('click', async (e) => {
@@ -1532,6 +1544,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     await messageRouter.send(MessageAction.ARCHIVE_CLEAR, {});
     setStatus('sp-archive-status', '보관함을 모두 비웠습니다.');
     renderArchiveStats();
+
+  // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
+  panelReady = true;
+  const restoredView = configManager.get('spActiveView') || 'search';
+  if (restoredView === 'alerts') {
+    renderKeywordAlerts();
+    renderNotifications();
+  }
   });
 
   // --- 갤러리 지분율 분석 ---
@@ -1615,5 +1635,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('sp-analytics-run')?.addEventListener('click', runGalleryAnalytics);
 
   renderArchiveStats();
+
+  // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
+  panelReady = true;
+  const restoredView = configManager.get('spActiveView') || 'search';
+  if (restoredView === 'alerts') {
+    renderKeywordAlerts();
+    renderNotifications();
+  }
 
 });

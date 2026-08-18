@@ -172,7 +172,7 @@ export function suspiciousIpBands(posts, minNicknames = 3) {
  * 디시는 대댓글을 `parentId`(답글 대상 번호)로 주기도 하고, 본문에
  * `@닉네임`으로만 표시하기도 한다. 둘 다 사용해 트리를 만든다.
  *
- * @param {Array<{id: string, author?: string, content?: string, parentId?: string|null}>} comments 작성 순서
+ * @param {Array<{id: string, author?: string, content?: string, parentId?: string|null, replyToNick?: string}>} comments 작성 순서
  * @returns {Array<Object>} depth가 매겨진 평탄한 목록 (렌더 순서 = 트리 순서)
  */
 export function buildCommentTree(comments) {
@@ -189,9 +189,11 @@ export function buildCommentTree(comments) {
     if (comment.parentId && byId.has(String(comment.parentId)) && String(comment.parentId) !== String(comment.id)) {
       parent = byId.get(String(comment.parentId));
     } else {
-      const mention = String(comment.content || '').match(/^\s*@([^\s@]{1,20})/);
-      if (mention) {
-        const target = lastByNickname.get(mention[1]);
+      // 디시가 답글 대상 닉네임을 따로 주면 그것을 우선하고, 없으면 본문의 @호출을 본다.
+      const mentionNick = comment.replyToNick
+        || (String(comment.content || '').match(/^\s*@([^\s@]{1,20})/) || [])[1];
+      if (mentionNick) {
+        const target = lastByNickname.get(mentionNick);
         if (target && target !== comment) parent = target;
       }
     }

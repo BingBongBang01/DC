@@ -70,14 +70,27 @@ export class CommentTreeFeature extends BaseFeature {
     const author = this._postAuthor();
     const parsed = items.map((li, index) => {
       const writer = li.querySelector('.gall_writer, .ub-writer');
-      const text = li.querySelector('.usertxt, .cmt_txt')?.textContent || '';
+      const body = li.querySelector('.usertxt, .cmt_txt');
+
+      // 디시가 답글 대상 닉네임을 따로 표시해 주면 그것을 쓰고, 본문 텍스트에서는
+      // 그 표시를 뺀다. (본문에 문자열로 합치면 닉과 내용이 붙어버려 파싱이 깨진다)
+      const targetNode = li.querySelector('.reply_target_nick');
+      const targetNick = targetNode ? targetNode.textContent.replace(/^@/, '').trim() : '';
+
+      let content = '';
+      if (body) {
+        const clone = body.cloneNode(true);
+        clone.querySelector('.reply_target_nick')?.remove();
+        content = (clone.textContent || '').trim();
+      }
+
       return {
         id: (li.id || `idx_${index}`).replace('comment_li_', ''),
         author: writer?.getAttribute('data-nick') || '',
         uid: writer?.getAttribute('data-uid') || '',
         ip: writer?.getAttribute('data-ip') || '',
-        content: text.trim(),
-        parentId: li.querySelector('.reply_target_nick') ? null : null,
+        content,
+        replyToNick: targetNick,
         element: li
       };
     });
@@ -171,12 +184,18 @@ export class CommentTreeFeature extends BaseFeature {
         event.currentTarget.textContent = '트리 보기';
       } else {
         const items = Array.from(list.querySelectorAll(':scope > li.ub-content'));
-        const parsed = items.map((li, index) => ({
-          id: (li.id || `idx_${index}`).replace('comment_li_', ''),
-          author: li.querySelector('.gall_writer, .ub-writer')?.getAttribute('data-nick') || '',
-          content: (li.querySelector('.usertxt, .cmt_txt')?.textContent || '').trim(),
-          element: li
-        }));
+        const parsed = items.map((li, index) => {
+          const body = li.querySelector('.usertxt, .cmt_txt');
+          const clone = body ? body.cloneNode(true) : null;
+          clone?.querySelector('.reply_target_nick')?.remove();
+          return {
+            id: (li.id || `idx_${index}`).replace('comment_li_', ''),
+            author: li.querySelector('.gall_writer, .ub-writer')?.getAttribute('data-nick') || '',
+            content: (clone?.textContent || '').trim(),
+            replyToNick: li.querySelector('.reply_target_nick')?.textContent.replace(/^@/, '').trim() || '',
+            element: li
+          };
+        });
         this._reorder(list, parsed);
         event.currentTarget.textContent = '원본 순서';
       }

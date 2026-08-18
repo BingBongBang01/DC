@@ -160,6 +160,11 @@ export class InfiniteScrollFeature extends BaseFeature {
       eventBus.emit('dom:articles_added', { source: 'infinite-scroll', count: appended });
 
       this._prefetch(nextPage + 1);
+    } catch (err) {
+      // 안내가 '불러오는 중...'으로 굳지 않도록 실패를 표시하고 다시 시도할 수 있게 둔다.
+      this.prefetched.delete(nextPage);
+      this._setSentinel('다음 페이지를 불러오지 못했습니다. 스크롤하면 다시 시도합니다.');
+      throw err;
     } finally {
       this.loading = false;
     }

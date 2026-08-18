@@ -114,22 +114,20 @@ export class ArchiveCacheFeature extends BaseFeature {
     // 무한 스크롤이나 DOM 변경마다 목록 전체를 다시 보내면 500행 기준 140KB를
     // 매번 직렬화하고 IndexedDB에도 같은 수만큼 쓰기가 발생한다. 새로 등장한
     // 항목만 추린다. (본문 레코드는 body/media가 추가되므로 항상 보낸다)
-    const freshPosts = posts.filter(post => {
-      if (post.body !== undefined) return true;
-      if (this._sentPosts.has(post.id)) return false;
-      this._sentPosts.add(post.id);
-      return true;
-    });
-    const freshComments = comments.filter(comment => {
-      if (this._sentComments.has(comment.id)) return false;
-      this._sentComments.add(comment.id);
-      return true;
-    });
+    const freshPosts = posts.filter(post => post.body !== undefined || !this._sentPosts.has(post.id));
+    const freshComments = comments.filter(comment => !this._sentComments.has(comment.id));
 
     if (freshPosts.length === 0 && freshComments.length === 0) return { posts: 0, comments: 0 };
 
     const res = await messageRouter.send(MessageAction.ARCHIVE_PUT, { posts: freshPosts, comments: freshComments });
     const saved = res && res.success ? res.data : { posts: 0, comments: 0 };
+
+    // 저장에 성공한 뒤에 기록해야 한다. 먼저 표시해 두면 백그라운드가 잠들어 있어
+    // 실패한 경우 그 글들이 영영 다시 수집되지 않는다.
+    if (res && res.success) {
+      freshPosts.forEach(post => this._sentPosts.add(post.id));
+      freshComments.forEach(comment => this._sentComments.add(comment.id));
+    }
     logger.debug(`ArchiveCache: stored ${saved.posts || 0} post(s), ${saved.comments || 0} comment(s).`);
     return saved;
   }
