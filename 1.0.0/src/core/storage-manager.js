@@ -59,7 +59,6 @@ export const INITIAL_STORAGE_SCHEMA = {
     enableArchiveCapture: true,
     enableCommentTree: true,
     enableUserAnalytics: true,
-    commentTreeEnabled: false,
     archiveDefaultMode: 'cache', // 'cache' | 'image' | 'pdf' | 'archive-today'
     analyticsSampleSize: 200
   },

@@ -508,7 +508,7 @@ tr.ub-content.dcu-hot-blazing { background: rgba(239, 68, 68, 0.16) !important; 
 .dcu-archive-comment b { margin-right: 4px; }
 .dcu-archive-comment i { margin-left: 6px; color: #9ca3af; font-size: 11px; font-style: normal; }
 
-/* 댓글 트리 / 글쓴이 */
+/* 글쓴이 댓글 강조 */
 .dcu-cmt-toolbar {
   display: flex;
   align-items: center;
@@ -527,10 +527,6 @@ tr.ub-content.dcu-hot-blazing { background: rgba(239, 68, 68, 0.16) !important; 
 }
 .dcu-cmt-btn:hover { background: rgba(99, 102, 241, 0.15); }
 .dcu-cmt-count { color: #6b7280; }
-li.dcu-cmt-child {
-  border-left: 2px solid rgba(99, 102, 241, 0.35);
-  padding-left: 8px !important;
-}
 li.dcu-cmt-author { background: rgba(16, 185, 129, 0.08); }
 .dcu-cmt-author-badge {
   display: inline-block;
