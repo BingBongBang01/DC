@@ -9,7 +9,7 @@ import { filterEngine, FILTER_ACTIONS, FilterRuleItem } from '../src/core/filter
 import { storageManager } from '../src/core/storage-manager.js';
 import { configManager } from '../src/core/config-manager.js';
 import { themeSystem } from '../src/ui/theme/theme-system.js';
-import { automationEngine } from '../src/core/automation/automation-engine.js';
+import { keywordAlertManager } from '../src/core/keyword-alert/keyword-alert-manager.js';
 import { notificationManager } from '../src/core/notifications/notification-manager.js';
 import { aiFeature } from '../src/features/ai-feature.js';
 import { Article } from '../src/utils/models.js';
@@ -72,7 +72,7 @@ export async function runPhase19E2EQATests() {
   console.log('✓ Scenario E (Bookmark Persistence): PASS');
 
   // Scenario F — Automation
-  await automationEngine.init();
+  await keywordAlertManager.initAlarms();
   notificationManager.notify('e2e_notif', '알림 제목', '내용');
   console.log('✓ Scenario F (Automation & Notification): PASS');
 

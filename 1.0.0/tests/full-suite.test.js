@@ -4,7 +4,6 @@ import { UserNotesFeature } from '../src/features/user-notes-feature.js';
 import { CommentToolsFeature } from '../src/features/comment-tools-feature.js';
 import { MediaToolsFeature } from '../src/features/media-tools-feature.js';
 import { DataManager } from '../src/core/data-manager.js';
-import { AutomationEngine, AutomationJob } from '../src/core/automation/automation-engine.js';
 import { NotificationManager } from '../src/core/notifications/notification-manager.js';
 import { Article, Comment, Media } from '../src/utils/models.js';
 

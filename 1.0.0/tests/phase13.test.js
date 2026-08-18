@@ -23,7 +23,8 @@ import { userNotesFeature } from '../src/features/user-notes-feature.js';
 import { commentToolsFeature } from '../src/features/comment-tools-feature.js';
 import { mediaToolsFeature } from '../src/features/media-tools-feature.js';
 import { dataManager } from '../src/core/data-manager.js';
-import { automationEngine } from '../src/core/automation/automation-engine.js';
+import { keywordAlertManager } from '../src/core/keyword-alert/keyword-alert-manager.js';
+import { storageRepository } from '../src/core/storage-repository.js';
 import { notificationManager } from '../src/core/notifications/notification-manager.js';
 import { authManager } from '../src/auth/auth-manager.js';
 import { aiFeature } from '../src/features/ai-feature.js';
@@ -103,11 +104,10 @@ export async function runPhase13QATests() {
   assert.ok(jsonExport.includes('schemaVersion'));
   console.log('✓ 12. Import/Export QA: PASS');
 
-  // 13. Automation QA
-  await automationEngine.init();
-  await configManager.set('enableAutomation', false);
-  await automationEngine.runJobById('nonexistent_job');
-  await configManager.set('enableAutomation', true);
+  // 13. Automation QA (AutomationEngine은 KeywordAlert 시스템으로 대체됨)
+  await keywordAlertManager.initAlarms();
+  await keywordAlertManager.handleAlarm('kw_alert:nonexistent'); // 없는 규칙은 조용히 무시
+  assert.ok(Array.isArray(await storageRepository.getKeywordAlerts()));
   console.log('✓ 13. Automation QA: PASS');
 
   // 14. Notifications QA

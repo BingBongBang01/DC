@@ -7,7 +7,7 @@ import { SearchQuery } from '../src/core/search/query-builder.js';
 import { searchAggregationFeature } from '../src/features/search-aggregation-feature.js';
 import { filterEngine, FILTER_ACTIONS, FilterRuleItem } from '../src/core/filters/filter-engine.js';
 import { Article } from '../src/utils/models.js';
-import { automationEngine } from '../src/core/automation/automation-engine.js';
+import { keywordAlertManager } from '../src/core/keyword-alert/keyword-alert-manager.js';
 import { notificationManager } from '../src/core/notifications/notification-manager.js';
 import { aiFeature } from '../src/features/ai-feature.js';
 import { MOCK_SEARCH_PAGE_1, MOCK_SEARCH_PAGE_2, MOCK_SEARCH_PAGE_3 } from './fixtures/search-fixtures.js';
@@ -70,7 +70,7 @@ export async function runPhase15IntegrationQATests() {
   console.log('✓ Scenario 4 (Article -> User Filter -> Comment Filter -> Media): PASS');
 
   // Scenario 5: Saved Search -> Automation -> New Result -> Deduplication -> Notification
-  await automationEngine.init();
+  await keywordAlertManager.initAlarms();
   notificationManager.notify('sc5_notif', '신규 결과', '내용');
   console.log('✓ Scenario 5 (Automation -> New Result -> Deduplication -> Notification): PASS');
 

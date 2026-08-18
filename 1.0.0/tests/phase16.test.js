@@ -2,7 +2,8 @@ import assert from 'assert';
 import { storageManager, CURRENT_SCHEMA_VERSION, INITIAL_STORAGE_SCHEMA } from '../src/core/storage-manager.js';
 import { configManager } from '../src/core/config-manager.js';
 import { filterEngine, FILTER_ACTIONS, FilterRuleItem } from '../src/core/filters/filter-engine.js';
-import { automationEngine } from '../src/core/automation/automation-engine.js';
+import { keywordAlertManager } from '../src/core/keyword-alert/keyword-alert-manager.js';
+import { storageRepository } from '../src/core/storage-repository.js';
 import { messageRouter } from '../src/core/message-router.js';
 
 export async function runPhase16StateAndSWQATests() {
@@ -59,8 +60,8 @@ export async function runPhase16StateAndSWQATests() {
   console.log('✓ Category 4 (Service Worker Terminate & Restart State Reload): PASS');
 
   // 5. Alarms Persistence Post-Restart
-  await automationEngine.init();
-  assert.ok(Array.isArray(automationEngine.jobs));
+  await keywordAlertManager.initAlarms();
+  assert.ok(Array.isArray(await storageRepository.getKeywordAlerts()));
   console.log('✓ Category 5 (Alarms Persistence Post-SW Restart): PASS');
 
   // 6. Message Routing Fault Tolerance

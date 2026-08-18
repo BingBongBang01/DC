@@ -111,6 +111,8 @@ if (typeof global.chrome === 'undefined') {
     },
     alarms: {
       create: () => {},
+      getAll: async () => [],
+      clear: async () => true,
       clearAll: (cb) => { if (cb) cb(); },
       onAlarm: { addListener: (fn) => listeners.onAlarm.push(fn) }
     },

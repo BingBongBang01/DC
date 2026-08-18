@@ -18,7 +18,6 @@ import { runPhase16StateAndSWQATests } from './phase16.test.js';
 import { runPhase17PerformanceQATests } from './phase17.test.js';
 import { runPhase18SecurityQATests } from './phase18.test.js';
 import { runPhase19E2EQATests } from './phase19.test.js';
-import { runAutomationTests } from './automation.test.js';
 import { runKeywordAlertTests } from './keyword-alert.test.js';
 import { runAutoLoginTests } from './auto-login.test.js';
 import { runPhase21Tests } from './phase21.test.js';
@@ -61,8 +60,6 @@ async function main() {
     await runPhase18SecurityQATests();
     console.log('');
     await runPhase19E2EQATests();
-    console.log('');
-    await runAutomationTests();
     console.log('');
     await runKeywordAlertTests();
     console.log('');
