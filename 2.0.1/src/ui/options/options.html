@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="options_title">DC Ultimate 설정</title>
+  <link rel="stylesheet" href="../theme/tokens.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-app">
+    <!-- App Header -->
+    <header class="opt-header">
+      <div class="brand">
+        <div class="brand-title">DC Ultimate</div>
+        <div class="brand-subtitle" data-i18n="options_title_sub">설정</div>
+      </div>
+      <div class="header-actions">
+        <select id="theme-select" class="md3-select" style="width: auto; height: 36px; padding: 0 12px;">
+          <option value="system" data-i18n="options_theme_system">시스템 테마</option>
+          <option value="light" data-i18n="options_theme_light">라이트</option>
+          <option value="dark" data-i18n="options_theme_dark">다크</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Workspace -->
+    <div class="opt-workspace">
+      <!-- Sidebar Navigation -->
+      <nav class="opt-sidebar">
+        <div class="nav-group">
+          <div class="nav-group-label" data-i18n="nav_overview">개요</div>
+          <button class="nav-item active" data-tab="tab-dashboard">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <span data-i18n="nav_dashboard">대시보드</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-label" data-i18n="nav_browsing">브라우징</div>
+          <button class="nav-item" data-tab="tab-general">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.73 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span data-i18n="nav_general">일반</span>
+          </button>
+          <button class="nav-item" data-tab="tab-reading">
+            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            <span data-i18n="nav_reading">읽기 및 레이아웃</span>
+          </button>
+          <button class="nav-item" data-tab="tab-media">
+            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <span data-i18n="nav_media">미디어 갤러리</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-label" data-i18n="nav_automation">자동화</div>
+          <button class="nav-item" data-tab="tab-autosig">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span data-i18n="nav_autosig">자동 첨부</span>
+          </button>
+          <button class="nav-item" data-tab="tab-login">
+            <svg viewBox="0 0 24 24"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+            <span>DC 로그인</span>
+          </button>
+          <button class="nav-item" data-tab="tab-automation">
+            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+            <span data-i18n="nav_alerts">알림 및 자동화</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-label" data-i18n="nav_search_filter">검색 및 필터</div>
+          <button class="nav-item" data-tab="tab-search">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span data-i18n="nav_search">수집 엔진</span>
+          </button>
+          <button class="nav-item" data-tab="tab-filters">
+            <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+            <span data-i18n="nav_filters">필터 엔진</span>
+          </button>
+          <button class="nav-item" data-tab="tab-users">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span data-i18n="nav_users">유저 노트</span>
+          </button>
+          <button class="nav-item" data-tab="tab-comments">
+            <svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+            <span data-i18n="nav_comments">댓글 도구</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-group-label" data-i18n="nav_data">데이터</div>
+          <button class="nav-item" data-tab="tab-profiles">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <span data-i18n="nav_profiles">갤러리 프로필</span>
+          </button>
+          <button class="nav-item" data-tab="tab-data">
+            <svg viewBox="0 0 24 24"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/></svg>
+            <span data-i18n="nav_backup">백업 및 복원</span>
+          </button>
+          <button class="nav-item" data-tab="tab-storage">
+            <svg viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
+            <span data-i18n="nav_storage">저장 공간 검사기</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="opt-content-area">
+        <div class="opt-content">
+          
+          <!-- Dashboard Tab -->
+          <section id="tab-dashboard" class="tab-pane active">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_dashboard">대시보드</h2>
+              <p class="page-description" data-i18n="dash_desc">DC Ultimate 확장프로그램 상태 및 활성화된 모듈 개요입니다.</p>
+            </div>
+            
+            <div class="dash-grid">
+              <div class="dash-card">
+                <h3 class="dash-card-title">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--md-sys-color-primary)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                  <span data-i18n="dash_ext_status">확장프로그램 상태</span>
+                </h3>
+                <p data-i18n="dash_ext_running">DC Ultimate 엔진 <b>v1.0.0</b>이 정상적으로 실행 중입니다.</p>
+                <div id="dash-active-features" style="margin-top: 12px;"></div>
+              </div>
+              <div class="dash-card">
+                <h3 class="dash-card-title">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--md-sys-color-primary)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg>
+                  <span data-i18n="dash_auto_status">자동화 상태</span>
+                </h3>
+                <p id="dash-auto-status" data-i18n="dash_auto_running">모니터링 루프가 활성화되었습니다.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- General Tab -->
+          <section id="tab-general" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_general">일반</h2>
+              <p class="page-description" data-i18n="gen_desc">핵심 브라우징 동작 및 확장프로그램 상호작용을 구성합니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="gen_behavior">브라우징 동작</h3>
+              
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="gen_refresh">자동 새로고침 (초)</div>
+                  <div class="setting-description" data-i18n="gen_refresh_desc">일정 간격으로 갤러리 목록을 자동으로 새로고침합니다. 0으로 설정하면 비활성화됩니다.</div>
+                </div>
+                <div class="setting-control">
+                  <input type="number" id="auto-refresh" class="md3-input" min="0" max="300" value="0" style="width: 100px;">
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="gen_interface">인터페이스</h3>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">DC 야간모드 연동</div>
+                  <div class="setting-description">위쪽 테마 선택(시스템/라이트/다크)을 디시인사이드 야간모드에도 그대로 적용합니다. 디시 페이지에서 야간모드 버튼을 눌러도 확장프로그램 테마가 함께 바뀝니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-dcdark">
+                  <!-- Injected switch -->
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="gen_icon_action">확장프로그램 아이콘 동작</div>
+                  <div class="setting-description" data-i18n="gen_icon_desc">확장프로그램 아이콘을 클릭하면 팝업 대신 사이드 패널이 바로 열립니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-sidepanel">
+                  <!-- Injected switch -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Reading Tab -->
+          <section id="tab-reading" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_reading">읽기 및 레이아웃</h2>
+              <p class="page-description" data-i18n="read_desc">팝오버 및 고급 레이아웃으로 읽기 경험을 향상시킵니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="read_hover">미리보기 팝오버</div>
+                  <div class="setting-description" data-i18n="read_hover_desc">게시글 제목에 마우스를 올리면 클릭하지 않고도 내용을 미리 볼 수 있습니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-preview">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="read_layout">다단 읽기 레이아웃</div>
+                  <div class="setting-description" data-i18n="read_layout_desc">넓은 화면에서 목록, 게시글, 댓글을 나란히 배치합니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-reading">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Media Tab -->
+          <section id="tab-media" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_media">미디어 갤러리</h2>
+              <p class="page-description" data-i18n="media_desc">일괄 다운로드 및 원본 이미지 보기 옵션입니다.</p>
+            </div>
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="media_tools">미디어 갤러리 도구</div>
+                  <div class="setting-description" data-i18n="media_tools_desc">원본 이미지 팝업, 일괄 선택, 중복 이미지 감지 기능을 제공합니다.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Auto Signature Tab -->
+          <section id="tab-autosig" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="sig_title">서명 이미지 자동 첨부</h2>
+              <p class="page-description" data-i18n="sig_desc">게시글 작성 시 상단에 서명 이미지(자짤)를 자동으로 삽입합니다.</p>
+            </div>
+            <div class="setting-section"><div class="setting-row"><div class="setting-copy"><div class="setting-description">자짤을 <strong>여러 장 등록</strong>하고 랜덤 / 지정 1개 / 갤러리별로 쓰는 설정은 <strong>사이드패널 [작성] 탭</strong>에서 관리합니다. 이 화면에서 저장하면 목록에 한 장이 추가됩니다.</div></div><div class="setting-control"></div></div></div>
+
+
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="sig_enable">자동 첨부 사용</div>
+                  <div class="setting-description" data-i18n="sig_enable_desc">새 글을 작성할 때 설정된 이미지를 에디터에 자동으로 삽입합니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-autosig">
+                </div>
+              </div>
+
+              <div class="setting-row stacked">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="sig_image">서명 이미지 (자짤)</div>
+                  <div class="setting-description" data-i18n="sig_image_desc">사용할 이미지를 선택하세요. 확장프로그램 저장 공간에 저장됩니다.</div>
+                </div>
+                
+                <div class="setting-control" style="flex-direction: column; align-items: stretch; margin-top: 16px;">
+                  <div class="sig-upload-area">
+                    <img id="sig-preview-img" style="max-width: 100%; max-height: 200px; display: none; border-radius: 8px; margin-bottom: 12px;" alt="Preview">
+                    <div id="sig-empty-text" style="margin-bottom: 12px; color: var(--md-sys-color-on-surface-variant);" data-i18n="sig_empty">등록된 서명 이미지가 없습니다.</div>
+                    <input type="file" id="sig-file-input" accept="image/*" class="md3-input" style="width: auto;">
+                  </div>
+                  
+                  <div style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end;">
+                    <button id="btn-delete-sig" class="md3-button md3-button--danger" data-i18n="sig_delete">이미지 삭제</button>
+                    <button id="btn-save-sig" class="md3-button md3-button--primary" data-i18n="sig_save">서명 저장</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Automation Tab -->
+          <!-- DC Login Tab -->
+          <section id="tab-login" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title">DC 로그인</h2>
+              <p class="page-description">로그인이 풀렸을 때 저장된 계정으로 자동 로그인합니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title">자동 로그인</h3>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">자동 로그인 사용</div>
+                  <div class="setting-description">디시인사이드 페이지에서 로그아웃 상태가 감지되면 저장된 계정으로 다시 로그인합니다. 직접 로그아웃한 경우 그 탭에서는 계속 로그아웃 상태로 두고, 새 탭이나 다른 사이트를 거쳐 다시 들어올 때 자동 로그인합니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-autologin">
+                  <!-- Injected switch -->
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">비밀번호 변경 안내 건너뛰기</div>
+                  <div class="setting-description">로그인 후 비밀번호 변경 안내가 뜨면 [나중에 변경]을 자동으로 선택해 바로 로그인 상태로 진입합니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-skippw">
+                  <!-- Injected switch -->
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title">계정</h3>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">디시인사이드 아이디</div>
+                </div>
+                <div class="setting-control">
+                  <input type="text" id="login-user-id" class="md3-input" placeholder="아이디" autocomplete="off" style="width: 220px;">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">비밀번호</div>
+                </div>
+                <div class="setting-control">
+                  <input type="password" id="login-password" class="md3-input" placeholder="비밀번호" autocomplete="off" style="width: 220px;">
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title">상태</div>
+                  <div class="setting-description" id="login-status-text">불러오는 중...</div>
+                </div>
+                <div class="setting-control" style="display: flex; gap: 8px;">
+                  <button type="button" id="btn-save-login" class="md3-button md3-button--primary">저장</button>
+                  <button type="button" id="btn-clear-login" class="md3-button md3-button--danger">삭제</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title">보안 안내</h3>
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-description">
+                    아이디와 비밀번호는 이 브라우저 프로필의 확장프로그램 저장소(<code>chrome.storage.local</code>)에 <strong>암호화 없이</strong> 저장되며,
+                    저장된 값은 <strong>sign.dcinside.com</strong> 로그인 폼에만 입력됩니다. 공용 PC에서는 사용하지 마세요.<br>
+                    보안문자(캡차)나 추가 인증이 요구되면 자동 로그인은 즉시 중단되고 직접 로그인해야 합니다.
+                    연속 3회 로그인에 실패하면 계정 잠금을 막기 위해 자동 로그인이 자동으로 멈춥니다.
+                  </div>
+                </div>
+                <div class="setting-control"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-automation" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_alerts">알림 및 자동화</h2>
+              <p class="page-description" data-i18n="auto_desc">백그라운드 모니터링 및 자동화된 작업을 구성합니다.</p>
+            </div>
+            
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="auto_switch">전역 자동화 스위치</div>
+                  <div class="setting-description" data-i18n="auto_switch_desc">모든 백그라운드 폴링 및 알림을 활성화하거나 비활성화합니다.</div>
+                </div>
+                <div class="setting-control" id="switch-opt-automation">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Search Tab -->
+          <section id="tab-search" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_search">수집 엔진</h2>
+              <p class="page-description" data-i18n="search_desc">다중 페이지 수집 및 검색 기능입니다.</p>
+            </div>
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="search_integrated">통합 검색</div>
+                  <div class="setting-description" data-i18n="search_integrated_desc">다중 페이지(20/50/100개)를 위한 사이드 패널의 통합 검색을 지원합니다.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Filters Tab -->
+          <section id="tab-filters" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_filters">필터 엔진</h2>
+              <p class="page-description" data-i18n="filter_desc">키워드, 유저, 또는 정규식 패턴을 기반으로 게시글을 숨기거나 강조합니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="filter_add">새 필터 규칙 추가</h3>
+              <div class="setting-row stacked">
+                <div class="setting-control" style="flex-direction: column; gap: 16px;">
+                  <div style="width: 100%;">
+                    <div class="setting-title" style="margin-bottom: 6px;" data-i18n="filter_name">규칙 이름</div>
+                    <input type="text" id="flt-name" class="md3-input"  placeholder="예: 스팸 차단" data-i18n-placeholder="filter_name_ph">
+                  </div>
+                  <div style="width: 100%;">
+                    <div class="setting-title" style="margin-bottom: 6px;" data-i18n="filter_pattern">패턴 / 키워드</div>
+                    <input type="text" id="flt-pattern" class="md3-input"  placeholder="키워드 또는 정규식" data-i18n-placeholder="filter_pattern_ph">
+                  </div>
+                  <div style="width: 100%; display: flex; gap: 16px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                      <div class="setting-title" style="margin-bottom: 6px;" data-i18n="filter_action">동작</div>
+                      <select id="flt-action" class="md3-select">
+                        <option value="HIDE" data-i18n="filter_action_hide">숨김 (제거)</option>
+                        <option value="DIM" selected data-i18n="filter_action_dim">흐리게 (반투명)</option>
+                        <option value="BLUR" data-i18n="filter_action_blur">블러 (모자이크)</option>
+                        <option value="COLLAPSE" data-i18n="filter_action_collapse">접기</option>
+                        <option value="MARK" data-i18n="filter_action_mark">마크 (강조)</option>
+                      </select>
+                    </div>
+                    <button id="btn-add-filter" class="md3-button md3-button--primary" data-i18n="filter_btn_add">규칙 추가</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;" data-i18n="filter_active">활성 필터 규칙</h3>
+            <div id="filter-rules-list" class="rules-list">
+              <!-- JS injected rules -->
+            </div>
+          </section>
+
+          <!-- Users Tab -->
+          <section id="tab-users" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_users">유저 노트</h2>
+              <p class="page-description" data-i18n="user_desc">특정 유저에 대한 로컬 메모를 보관합니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="user_add">유저 노트 추가</h3>
+              <div class="setting-row stacked">
+                <div class="setting-control" style="flex-direction: column; gap: 16px;">
+                  <div style="width: 100%; display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                      <div class="setting-title" style="margin-bottom: 6px;" data-i18n="user_id">유저 식별자 (ID/IP/닉네임)</div>
+                      <input type="text" id="un-key" class="md3-input"  placeholder="식별자" data-i18n-placeholder="user_id_ph">
+                    </div>
+                    <div style="flex: 2;">
+                      <div class="setting-title" style="margin-bottom: 6px;" data-i18n="user_note">노트 내용</div>
+                      <input type="text" id="un-note" class="md3-input"  placeholder="메모 텍스트" data-i18n-placeholder="user_note_ph">
+                    </div>
+                  </div>
+                  <div style="align-self: flex-end;">
+                    <button id="btn-save-usernote" class="md3-button md3-button--primary" data-i18n="user_btn_save">노트 저장</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;" data-i18n="user_saved">저장된 노트</h3>
+            <div id="usernotes-list" class="rules-list">
+              <!-- JS injected notes -->
+            </div>
+          </section>
+
+          <!-- Comments Tab -->
+          <section id="tab-comments" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_comments">댓글 도구</h2>
+              <p class="page-description" data-i18n="comment_desc">댓글 섹션을 필터링하고 내보냅니다.</p>
+            </div>
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="comment_export">댓글 내보내기</div>
+                  <div class="setting-description" data-i18n="comment_export_desc">로드된 댓글을 JSON/CSV로 내보냅니다 (페이지 내에서 처리됨).</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Profiles Tab -->
+          <section id="tab-profiles" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_profiles">갤러리 프로필</h2>
+              <p class="page-description" data-i18n="profile_desc">갤러리별로 특정 구성 및 재정의를 설정합니다.</p>
+            </div>
+            <div class="setting-section">
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="profile_override">프로필 재정의</div>
+                  <div class="setting-description" data-i18n="profile_override_desc">개별 갤러리에만 특정 필터나 레이아웃을 맞춤 설정합니다.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Data / Backup Tab -->
+          <section id="tab-data" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_backup">백업 및 복원</h2>
+              <p class="page-description" data-i18n="data_desc">구성을 파일로 내보내거나 이전 백업에서 복원합니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="data_export">내보내기</h3>
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="data_download">백업 다운로드</div>
+                  <div class="setting-description" data-i18n="data_download_desc">현재 설정, 필터, 및 유저 노트를 파일에 저장합니다.</div>
+                </div>
+                <div class="setting-control" style="gap: 8px;">
+                  <button id="btn-export-html" class="md3-button md3-button--secondary">HTML</button>
+                  <button id="btn-export-csv" class="md3-button md3-button--secondary">CSV</button>
+                  <button id="btn-export-json" class="md3-button md3-button--primary" data-i18n="data_json">JSON 백업</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="data_restore">복원</h3>
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="data_import">백업 가져오기</div>
+                  <div class="setting-description" data-i18n="data_import_desc">이전에 저장된 JSON 파일에서 구성을 복원합니다.</div>
+                </div>
+                <div class="setting-control">
+                  <input type="file" id="import-file" class="md3-input" accept=".json">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Storage Tab -->
+          <section id="tab-storage" class="tab-pane">
+            <div class="page-header">
+              <h2 class="page-title" data-i18n="nav_storage">저장 공간 검사기</h2>
+              <p class="page-description" data-i18n="storage_desc">확장프로그램 기본 데이터를 검사하기 위한 고급 도구입니다.</p>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-row stacked">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="storage_current">현재 스토리지 상태</div>
+                  <div class="setting-description mb-2" data-i18n="storage_current_desc">현재 Chrome 로컬 스토리지의 Raw JSON 보기입니다.</div>
+                </div>
+                <pre id="storage-inspector" class="code-block" data-i18n="common_loading">불러오는 중...</pre>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <h3 class="setting-section-title" data-i18n="storage_diag">진단 도구</h3>
+              <div class="setting-row">
+                <div class="setting-copy">
+                  <div class="setting-title" data-i18n="storage_error_logs">오류 로그</div>
+                  <div class="setting-description" data-i18n="storage_error_desc">캡처된 오류 로그를 내보내거나 삭제합니다.</div>
+                </div>
+                <div class="setting-control">
+                  <button id="opt-clear-logs" class="md3-button md3-button--secondary" data-i18n="storage_clear_logs">로그 삭제</button>
+                  <button id="opt-export-logs" class="md3-button md3-button--secondary" data-i18n="storage_export_logs">로그 내보내기</button>
+                </div>
+              </div>
+
+              <div class="setting-row" style="border-top: 1px solid var(--md-sys-color-error); background: rgba(179, 38, 30, 0.05);">
+                <div class="setting-copy">
+                  <div class="setting-title" style="color: var(--md-sys-color-error);" data-i18n="storage_reset">초기화 (공장 초기화)</div>
+                  <div class="setting-description" data-i18n="storage_reset_desc">모든 구성, 필터, 유저 노트를 삭제합니다. 이 작업은 되돌릴 수 없습니다.</div>
+                </div>
+                <div class="setting-control">
+                  <button id="btn-reset-storage" class="md3-button md3-button--danger" data-i18n="storage_btn_reset">모든 데이터 초기화</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

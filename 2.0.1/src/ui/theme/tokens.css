@@ -1,0 +1,56 @@
+/**
+ * DC Ultimate Material Design 3 Theme System Tokens
+ */
+
+:root {
+  /* Color Palette - Light Theme */
+  --md-sys-color-primary: #3b82f6;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #dbeafe;
+  --md-sys-color-on-primary-container: #1e40af;
+
+  --md-sys-color-surface: #f8fafc;
+  --md-sys-color-on-surface: #0f172a;
+  --md-sys-color-surface-variant: #f1f5f9;
+  --md-sys-color-on-surface-variant: #475569;
+
+  --md-sys-color-outline: #cbd5e1;
+  --md-sys-color-success: #10b981;
+  --md-sys-color-warning: #f59e0b;
+  --md-sys-color-error: #ef4444;
+
+  /* Typography */
+  --md-sys-typescale-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --md-sys-typescale-title-large-size: 18px;
+  --md-sys-typescale-title-large-weight: 600;
+  --md-sys-typescale-body-medium-size: 14px;
+  --md-sys-typescale-body-small-size: 12px;
+
+  /* Radius & Elevation */
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --md-sys-elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* Transitions */
+  --md-sys-motion-duration-short: 150ms;
+  --md-sys-motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] {
+  --md-sys-color-primary: #60a5fa;
+  --md-sys-color-on-primary: #0f172a;
+  --md-sys-color-primary-container: #1e3a8a;
+  --md-sys-color-on-primary-container: #dbeafe;
+
+  --md-sys-color-surface: #0f172a;
+  --md-sys-color-on-surface: #f8fafc;
+  --md-sys-color-surface-variant: #1e293b;
+  --md-sys-color-on-surface-variant: #94a3b8;
+
+  --md-sys-color-outline: #334155;
+  --md-sys-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --md-sys-elevation-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+}

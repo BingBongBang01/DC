@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DC Ultimate Side Panel</title>
+  <link rel="stylesheet" href="../theme/tokens.css">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="sp-container">
+    <header class="sp-header">
+      <div class="sp-header-titles">
+        <h1 class="sp-title">DC Extensions</h1>
+      </div>
+      <div style="flex: 1; display: flex; justify-content: flex-end; padding-right: 12px;">
+        <button type="button" id="sp-btn-donation" style="background-color: var(--md-sys-color-primary, #FF5E5B); color: var(--md-sys-color-on-primary, white); border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          도네이션
+        </button>
+      </div>
+      <div class="sp-status">
+        <span class="sp-status-dot" aria-hidden="true"></span>
+        <span class="sp-status-label">Ready</span>
+      </div>
+    </header>
+
+    <nav class="sp-servicebar" id="sp-servicebar" aria-label="서비스 선택">
+      <button type="button" class="sp-tile" data-view="search" aria-label="검색" title="검색">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span class="sp-tile-label">검색</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="gallery" aria-label="갤러리" title="갤러리">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 3L2 9v2h20V9L12 3zM4 13v6H2v2h20v-2h-2v-6h-2v6h-3v-6h-2v6h-3v-6H4z"/></svg>
+        <span class="sp-tile-label">갤러리</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="alerts" aria-label="알림" title="알림">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        <span class="sp-tile-label">알림</span><span class="sp-tile-badge hidden" id="sp-tile-badge-alerts">0</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="guard" aria-label="차단" title="차단">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        <span class="sp-tile-label">차단</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="write" aria-label="작성" title="작성">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        <span class="sp-tile-label">작성</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="archive" aria-label="보관" title="보관">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M20.54 5.23l-1.39-1.68A1.45 1.45 0 0018 3H6c-.47 0-.88.21-1.16.55L3.46 5.23A1.99 1.99 0 003 6.5V19a2 2 0 002 2h14a2 2 0 002-2V6.5c0-.49-.17-.94-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+        <span class="sp-tile-label">보관</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="analytics" aria-label="분석" title="분석">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>
+        <span class="sp-tile-label">분석</span>
+      </button>
+      <button type="button" class="sp-tile" data-view="view" aria-label="보기" title="보기">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M3 17h18v2H3v-2zm0-6h18v2H3v-2zm0-6h18v2H3V5zm17.5 12.5l2 2 3.5-3.5"/></svg>
+        <span class="sp-tile-label">보기</span>
+      </button>
+    </nav>
+    <main class="sp-main">
+      <div class="sp-view active" id="sp-view-search" data-view="search" role="tabpanel" aria-label="검색">
+      <!-- Search Surface -->
+      <section class="sp-section" aria-labelledby="heading-search">
+        <h2 id="heading-search" class="visually-hidden">SEARCH</h2>
+        
+        <div class="sp-search-bar">
+          <input type="text" id="sp-search-keyword" class="sp-input sp-input-primary" placeholder="검색어 입력 (예: 2TB)" value="" />
+          <button type="button" id="sp-btn-search" class="sp-btn-icon" aria-label="검색">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </button>
+        </div>
+
+        <div id="sp-recent-searches-container" class="sp-recent-searches">
+          <!-- Dynamic recent search buttons will be appended here -->
+        </div>
+
+        <details class="sp-advanced-options">
+          <summary class="sp-options-summary">
+            검색 옵션
+            <svg class="icon-expand" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+          </summary>
+          <div class="sp-options-content">
+            <div class="sp-form-group">
+              <label for="sp-search-gallery" class="sp-label">갤러리 ID</label>
+              <div class="sp-search-bar">
+                <input type="text" id="sp-search-gallery" class="sp-input" value="programming" />
+                <button type="button" id="sp-btn-use-current" class="sp-btn-outline" style="position: absolute; right: 4px; padding: 4px 8px; font-size: 11px; height: 28px;" title="현재 갤러리로 설정">현재 갤</button>
+              </div>
+            </div>
+
+            <div class="sp-form-group">
+              <label for="sp-search-category" class="sp-label">카테고리</label>
+              <select id="sp-search-category" class="sp-select">
+                <option value="">전체</option>
+              </select>
+            </div>
+
+            <div class="sp-form-group">
+              <label class="sp-label">검색 대상</label>
+              <div class="sp-target-group" id="sp-search-targets">
+                <label class="sp-target-label"><input type="checkbox" value="search_subject" checked> <span class="sp-target-chip">제목</span></label>
+                <label class="sp-target-label"><input type="checkbox" value="search_memo"> <span class="sp-target-chip">글내용</span></label>
+                <label class="sp-target-label"><input type="checkbox" value="search_comment"> <span class="sp-target-chip">댓글</span></label>
+                <label class="sp-target-label"><input type="checkbox" value="search_name"> <span class="sp-target-chip">글쓴이</span></label>
+              </div>
+            </div>
+
+            <div class="sp-form-group-row">
+              <div class="sp-form-group sp-flex-1">
+                <label for="sp-search-pages" class="sp-label">수집 페이지 수</label>
+                <input type="number" id="sp-search-pages" class="sp-input" min="1" max="100" step="1" value="10" inputmode="numeric" />
+                <div class="sp-pages-presets" id="sp-search-pages-presets">
+                  <button type="button" class="sp-pages-preset-btn" data-pages="5">5</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="10">10</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="20">20</button>
+                </div>
+              </div>
+              <div class="sp-form-group sp-flex-1">
+                <label for="sp-results-per-page" class="sp-label">페이지당 결과</label>
+                <select id="sp-results-per-page" class="sp-select">
+                  <option value="20" selected>20개씩</option>
+                  <option value="50">50개씩</option>
+                  <option value="100">100개씩</option>
+                  <option value="200">200개씩</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sp-form-group">
+              <label for="sp-sort-order" class="sp-label">정렬 방식</label>
+              <select id="sp-sort-order" class="sp-select">
+                <option value="newest" selected>최신순</option>
+                <option value="recommendations">추천순</option>
+                <option value="views">조회수순</option>
+                <option value="comments">댓글수순</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <!-- Progress UI -->
+        <div id="sp-progress-container" class="sp-progress-box hidden">
+          <div class="sp-progress-info">
+            <span id="sp-progress-text" class="sp-progress-text">수집 중... 0 / 10 페이지</span>
+            <button type="button" id="sp-btn-cancel" class="sp-btn-outline sp-btn-danger">취소</button>
+          </div>
+          <div class="sp-progress-track">
+            <div id="sp-progress-fill" class="sp-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </section>
+      <!-- Search Results -->
+      <section id="sp-results-section" class="sp-section hidden" aria-labelledby="heading-results">
+        <div class="sp-results-header">
+          <h2 id="heading-results" class="sp-section-title">검색 결과</h2>
+          <span id="sp-results-summary" class="sp-results-meta">수집 0건 | 가상 페이지 1 / 1</span>
+        </div>
+        
+        <div id="sp-results-list" class="sp-results-list"></div>
+
+        <div class="sp-pagination">
+          <button type="button" id="sp-pg-prev" class="sp-btn-outline" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+            이전
+          </button>
+          <span id="sp-pg-indicator" class="sp-pagination-indicator">1 / 1</span>
+          <button type="button" id="sp-pg-next" class="sp-btn-outline" disabled>
+            다음
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+        </div>
+      </section>
+      </div>
+      <div class="sp-view" id="sp-view-gallery" data-view="gallery" role="tabpanel" aria-label="갤러리">
+      <!-- Current Gallery Actions -->
+      <section id="sp-current-gallery-section" class="sp-section hidden" aria-labelledby="heading-current-gallery">
+        <div class="sp-results-header" style="padding-bottom: 4px; border-bottom: none;">
+           <h2 id="heading-current-gallery" class="sp-section-title">현재 갤러리</h2>
+           <button type="button" id="sp-btn-favorite-toggle" class="sp-btn-icon-small" title="즐겨찾기 추가/해제">
+             <svg class="icon-star" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+             </svg>
+           </button>
+        </div>
+        <div id="sp-current-gallery-name" style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--md-sys-color-on-surface);"></div>
+        <div class="sp-form-group-row mt-2">
+           <button type="button" id="sp-btn-nav-all" class="sp-btn-outline sp-flex-1">전체글</button>
+           <button type="button" id="sp-btn-nav-best" class="sp-btn-outline sp-flex-1">개념글</button>
+           <button type="button" id="sp-btn-nav-notice" class="sp-btn-outline sp-flex-1">공지</button>
+        </div>
+      </section>
+      <!-- Quick Access (Recent & Favorites) -->
+      <section class="sp-section" aria-labelledby="heading-quick-access">
+        <h2 id="heading-quick-access" class="sp-section-title">빠른 접근</h2>
+        
+        <div class="sp-quick-tabs">
+          <button type="button" class="sp-quick-tab active" data-target="sp-recent-galleries">최근 방문</button>
+          <button type="button" class="sp-quick-tab" data-target="sp-favorite-galleries">즐겨찾기</button>
+        </div>
+
+        <div id="sp-recent-galleries" class="sp-quick-content active">
+          <!-- Recent gallery list items go here -->
+        </div>
+        <div id="sp-favorite-galleries" class="sp-quick-content hidden">
+          <!-- Favorite gallery list items go here -->
+        </div>
+      </section>
+      </div>
+      <div class="sp-view" id="sp-view-alerts" data-view="alerts" role="tabpanel" aria-label="알림">
+      <!-- Keyword Alerts Section -->
+      <section class="sp-section" aria-labelledby="heading-keyword-alerts">
+        <div class="sp-results-header">
+          <h2 id="heading-keyword-alerts" class="sp-section-title">키워드 알림</h2>
+          <div style="display:flex; gap:4px;">
+            <button type="button" id="sp-btn-scan-now" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">지금 검사</button>
+            <button type="button" id="sp-btn-add-alert" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">+ 알림 추가</button>
+          </div>
+        </div>
+
+        <!-- Inline add form: the Side Panel cannot show window.prompt() dialogs -->
+        <form id="sp-alert-form" class="sp-alert-form hidden" autocomplete="off">
+          <div class="sp-alert-form-target">
+            대상 갤러리: <strong id="sp-alert-form-gallery">-</strong>
+          </div>
+          <input type="text" id="sp-alert-keywords" class="sp-input" placeholder="키워드 (쉼표로 구분, 예: 나눔, 무료)" />
+          <div class="sp-alert-form-row">
+            <label class="sp-alert-form-label" for="sp-alert-interval">검사 주기</label>
+            <select id="sp-alert-interval" class="sp-select">
+              <option value="1">1분</option>
+              <option value="3">3분</option>
+              <option value="5" selected>5분</option>
+              <option value="10">10분</option>
+              <option value="30">30분</option>
+              <option value="60">60분</option>
+            </select>
+          </div>
+          <div class="sp-alert-form-row">
+            <label class="sp-alert-form-label" for="sp-alert-match-mode">일치 방식</label>
+            <select id="sp-alert-match-mode" class="sp-select">
+              <option value="contains" selected>포함</option>
+              <option value="exact">제목 전체 일치</option>
+              <option value="regex">정규식</option>
+            </select>
+          </div>
+          <label class="sp-alert-form-check">
+            <input type="checkbox" id="sp-alert-notify-chrome" checked /> 데스크톱 알림 사용
+          </label>
+          <div class="sp-alert-form-actions">
+            <button type="submit" id="sp-alert-form-save" class="sp-btn-outline">저장</button>
+            <button type="button" id="sp-alert-form-cancel" class="sp-btn-outline">취소</button>
+          </div>
+        </form>
+
+        <div id="sp-alerts-status" class="sp-alert-form-status hidden" role="status"></div>
+
+        <div class="sp-quick-tabs mt-2">
+          <button type="button" class="sp-quick-tab active" data-target="sp-alerts-active">활성 알림</button>
+          <button type="button" class="sp-quick-tab" data-target="sp-alerts-recent">최근 알림 <span id="sp-alerts-unread-badge" class="sp-badge hidden">0</span></button>
+        </div>
+
+        <div id="sp-alerts-active" class="sp-quick-content active" style="max-height: 300px;">
+          <!-- Active alert rules -->
+        </div>
+        <div id="sp-alerts-recent" class="sp-quick-content hidden" style="max-height: 300px;">
+          <!-- Recent notifications -->
+        </div>
+      </section>
+      </div>
+      <div class="sp-view" id="sp-view-guard" data-view="guard" role="tabpanel" aria-label="차단">
+      <!-- 유저 메모 / 차단 -->
+      <section class="sp-section" aria-labelledby="heading-user-rules">
+        <div class="sp-results-header">
+          <h2 id="heading-user-rules" class="sp-section-title">유저 메모 · 차단</h2>
+          <button type="button" id="sp-btn-add-user-rule" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">+ 등록</button>
+        </div>
+
+        <form id="sp-user-rule-form" class="sp-alert-form hidden" autocomplete="off">
+          <div class="sp-alert-form-row">
+            <label class="sp-alert-form-label" for="sp-user-rule-type">대상</label>
+            <select id="sp-user-rule-type" class="sp-select">
+              <option value="nick">닉네임(고닉)</option>
+              <option value="uid">유저 아이디(uid)</option>
+              <option value="ip">IP (예: 223.39)</option>
+              <option value="ipPrefix">IP 대역 (예: 223.39)</option>
+              <option value="regex">정규식</option>
+            </select>
+          </div>
+          <input type="text" id="sp-user-rule-value" class="sp-input" placeholder="닉네임 / uid / IP 값" />
+          <input type="text" id="sp-user-rule-memo" class="sp-input" placeholder="메모 (라벨로 표시, 선택)" />
+          <div class="sp-alert-form-row">
+            <label class="sp-alert-form-label" for="sp-user-rule-action">처리</label>
+            <select id="sp-user-rule-action" class="sp-select">
+              <option value="blind">블라인드(펼치기 가능)</option>
+              <option value="hide">목록에서 숨김</option>
+              <option value="dim">흐리게</option>
+              <option value="label">메모 라벨만</option>
+            </select>
+          </div>
+          <label class="sp-alert-form-check">
+            <input type="checkbox" id="sp-user-rule-gallery" /> 현재 갤러리에만 적용
+          </label>
+          <div class="sp-alert-form-actions">
+            <button type="submit" class="sp-btn-outline">저장</button>
+            <button type="button" id="sp-user-rule-cancel" class="sp-btn-outline">취소</button>
+          </div>
+        </form>
+
+        <div id="sp-user-rule-status" class="sp-alert-form-status hidden" role="status"></div>
+        <div id="sp-user-rule-list" class="sp-quick-content active" style="max-height: 260px;"></div>
+      </section>
+      <!-- 도배 / 패턴 필터 -->
+      <section class="sp-section" aria-labelledby="heading-spam">
+        <h2 id="heading-spam" class="sp-section-title">도배 · 패턴 숨김</h2>
+
+        <div class="sp-toggle-row">
+          <label class="sp-alert-form-check"><input type="checkbox" id="sp-spam-enabled" /> 도배 자동 숨김 사용</label>
+        </div>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-spam-duplicate">동일 제목</label>
+          <input type="number" id="sp-spam-duplicate" class="sp-input" min="2" max="20" style="width: 70px;" />
+          <span class="sp-alert-form-label">건 이상</span>
+        </div>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-spam-special">특수문자</label>
+          <input type="number" id="sp-spam-special" class="sp-input" min="10" max="100" step="5" style="width: 70px;" />
+          <span class="sp-alert-form-label">% 이상</span>
+        </div>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-spam-run">같은 글자</label>
+          <input type="number" id="sp-spam-run" class="sp-input" min="3" max="30" style="width: 70px;" />
+          <span class="sp-alert-form-label">회 반복</span>
+        </div>
+        <textarea id="sp-spam-patterns" class="sp-input" rows="3" placeholder="정규식 패턴 (한 줄에 하나)"></textarea>
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-spam-save" class="sp-btn-outline">필터 저장</button>
+        </div>
+        <div id="sp-spam-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+      </div>
+      <div class="sp-view" id="sp-view-write" data-view="write" role="tabpanel" aria-label="작성">
+      <!-- 자짤 (자동 첨부 이미지) -->
+      <section class="sp-section" aria-labelledby="heading-autosig">
+        <div class="sp-results-header">
+          <h2 id="heading-autosig" class="sp-section-title">자짤 자동 첨부</h2>
+          <label class="sp-alert-form-check" style="margin:0;">
+            <input type="checkbox" id="sp-autosig-enabled" /> 사용
+          </label>
+        </div>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-autosig-mode">적용 방식</label>
+          <select id="sp-autosig-mode" class="sp-select">
+            <option value="random">랜덤 (등록된 자짤 중 무작위)</option>
+            <option value="single">지정 1개만 사용</option>
+            <option value="gallery">갤러리마다 다르게</option>
+          </select>
+        </div>
+
+        <div id="sp-autosig-hint" class="sp-alert-form-status"></div>
+
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-autosig-add" class="sp-btn-outline">이미지 추가</button>
+          <button type="button" id="sp-autosig-map" class="sp-btn-outline hidden">현재 갤러리에 지정</button>
+          <input type="file" id="sp-autosig-file" accept="image/*" multiple hidden />
+        </div>
+
+        <div id="sp-autosig-list" class="sp-autosig-grid"></div>
+        <div id="sp-autosig-gallery-map" class="sp-autosig-map hidden"></div>
+        <div id="sp-autosig-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- 임시저장 / 디시콘 -->
+      <section class="sp-section" aria-labelledby="heading-writing">
+        <div class="sp-results-header">
+          <h2 id="heading-writing" class="sp-section-title">작성 도우미</h2>
+        </div>
+
+        <div class="sp-quick-tabs mt-2">
+          <button type="button" class="sp-quick-tab active" data-target="sp-drafts">임시저장</button>
+          <button type="button" class="sp-quick-tab" data-target="sp-dccons">디시콘 즐겨찾기</button>
+        </div>
+
+        <div id="sp-drafts" class="sp-quick-content active" style="max-height: 260px;"></div>
+        <div id="sp-dccons" class="sp-quick-content hidden" style="max-height: 260px;"></div>
+      </section>
+      </div>
+      <div class="sp-view" id="sp-view-archive" data-view="archive" role="tabpanel" aria-label="보관">
+      <!-- 아카이브 / 박제 -->
+      <section class="sp-section" aria-labelledby="heading-archive">
+        <div class="sp-results-header">
+          <h2 id="heading-archive" class="sp-section-title">아카이브 · 박제</h2>
+          <button type="button" id="sp-archive-refresh" class="sp-btn-outline" style="padding:4px 8px; font-size:11px;">새로고침</button>
+        </div>
+
+        <div id="sp-archive-stats" class="sp-alert-form-status">보관함 정보를 불러오는 중...</div>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-archive-cache" /> 글/댓글 자동 캐시 (삭제 시 복구용)</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-archive-capture" /> 원클릭 박제 버튼 · 단축키(Shift+A)</label>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-archive-mode">단축키 기본 동작</label>
+          <select id="sp-archive-mode" class="sp-select">
+            <option value="cache">로컬 캐시 저장</option>
+            <option value="image">화면 이미지(PNG)</option>
+            <option value="pdf">PDF로 인쇄</option>
+            <option value="archive-today">archive.today</option>
+          </select>
+        </div>
+
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-archive-clear-gallery" class="sp-btn-outline">현재 갤 보관함 비우기</button>
+          <button type="button" id="sp-archive-clear-all" class="sp-btn-outline sp-btn-danger">전체 비우기</button>
+        </div>
+        <div id="sp-archive-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+      </div>
+
+      <div class="sp-view" id="sp-view-analytics" data-view="analytics" role="tabpanel" aria-label="분석">
+      <!-- 갤러리 지분율 / 유저 분석 -->
+      <section class="sp-section" aria-labelledby="heading-analytics">
+        <div class="sp-results-header">
+          <h2 id="heading-analytics" class="sp-section-title">갤러리 활동 지분율</h2>
+          <button type="button" id="sp-analytics-run" class="sp-btn-outline" style="padding:4px 8px; font-size:11px;">분석</button>
+        </div>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-analytics-sample">표본</label>
+          <select id="sp-analytics-sample" class="sp-select">
+            <option value="100">최근 100개 글</option>
+            <option value="200" selected>최근 200개 글</option>
+            <option value="500">최근 500개 글</option>
+          </select>
+        </div>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-user-analytics" /> 닉네임/IP Alt+클릭 시 활동 팝오버</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-comment-tree" /> 대댓글 트리 · 글쓴이 댓글 강조</label>
+
+        <div id="sp-analytics-summary" class="sp-alert-form-status">분석 버튼을 누르면 수집된 글을 기준으로 계산합니다.</div>
+        <div id="sp-analytics-list" class="sp-quick-content active" style="max-height: 300px;"></div>
+        <div id="sp-analytics-suspicious"></div>
+      </section>
+      </div>
+
+      <div class="sp-view" id="sp-view-view" data-view="view" role="tabpanel" aria-label="보기">
+      <!-- 보기 옵션 -->
+      <section class="sp-section" aria-labelledby="heading-view-options">
+        <h2 id="heading-view-options" class="sp-section-title">목록 보기 옵션</h2>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-infinite" /> 무한 스크롤 · 다음 페이지 프리페치</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-hot" /> 화제 글 하이라이트</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-markdown" /> 마크다운 · 코드 하이라이팅</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-draft" /> 작성 중 자동 임시저장</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-dccon" /> 디시콘 즐겨찾기 · /단축 입력</label>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-hot-rec">추천</label>
+          <input type="number" id="sp-hot-rec" class="sp-input" min="1" max="999" style="width: 70px;" />
+          <label class="sp-alert-form-label" for="sp-hot-cmt">댓글</label>
+          <input type="number" id="sp-hot-cmt" class="sp-input" min="1" max="999" style="width: 70px;" />
+        </div>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-infinite-max">무한스크롤 최대</label>
+          <input type="number" id="sp-infinite-max" class="sp-input" min="1" max="50" style="width: 70px;" />
+          <span class="sp-alert-form-label">페이지</span>
+        </div>
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-view-save" class="sp-btn-outline">보기 옵션 저장</button>
+        </div>
+        <div id="sp-view-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

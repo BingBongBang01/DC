@@ -1,0 +1,411 @@
+{
+  "options_title": {
+    "message": "DC Ultimate 설정"
+  },
+  "options_title_sub": {
+    "message": "설정"
+  },
+  "options_theme_system": {
+    "message": "시스템 테마"
+  },
+  "options_theme_light": {
+    "message": "라이트"
+  },
+  "options_theme_dark": {
+    "message": "다크"
+  },
+  "nav_overview": {
+    "message": "개요"
+  },
+  "nav_dashboard": {
+    "message": "대시보드"
+  },
+  "nav_browsing": {
+    "message": "브라우징"
+  },
+  "nav_general": {
+    "message": "일반"
+  },
+  "nav_reading": {
+    "message": "읽기 및 레이아웃"
+  },
+  "nav_media": {
+    "message": "미디어 갤러리"
+  },
+  "nav_automation": {
+    "message": "자동화"
+  },
+  "nav_autosig": {
+    "message": "자동 첨부"
+  },
+  "nav_alerts": {
+    "message": "알림 및 자동화"
+  },
+  "nav_search_filter": {
+    "message": "검색 및 필터"
+  },
+  "nav_search": {
+    "message": "수집 엔진"
+  },
+  "nav_filters": {
+    "message": "필터 엔진"
+  },
+  "nav_users": {
+    "message": "유저 노트"
+  },
+  "nav_comments": {
+    "message": "댓글 도구"
+  },
+  "nav_data": {
+    "message": "데이터"
+  },
+  "nav_profiles": {
+    "message": "갤러리 프로필"
+  },
+  "nav_backup": {
+    "message": "백업 및 복원"
+  },
+  "nav_storage": {
+    "message": "저장 공간 검사기"
+  },
+  "dash_desc": {
+    "message": "DC Ultimate 확장프로그램 상태 및 활성화된 모듈 개요입니다."
+  },
+  "dash_ext_status": {
+    "message": "확장프로그램 상태"
+  },
+  "dash_ext_running": {
+    "message": "DC Ultimate 엔진 <b>v1.0.0</b>이 정상적으로 실행 중입니다."
+  },
+  "dash_auto_status": {
+    "message": "자동화 상태"
+  },
+  "dash_auto_running": {
+    "message": "모니터링 루프가 활성화되었습니다."
+  },
+  "gen_desc": {
+    "message": "핵심 브라우징 동작 및 확장프로그램 상호작용을 구성합니다."
+  },
+  "gen_behavior": {
+    "message": "브라우징 동작"
+  },
+  "gen_refresh": {
+    "message": "자동 새로고침 (초)"
+  },
+  "gen_refresh_desc": {
+    "message": "일정 간격으로 갤러리 목록을 자동으로 새로고침합니다. 0으로 설정하면 비활성화됩니다."
+  },
+  "gen_interface": {
+    "message": "인터페이스"
+  },
+  "gen_icon_action": {
+    "message": "확장프로그램 아이콘 동작"
+  },
+  "gen_icon_desc": {
+    "message": "확장프로그램 아이콘을 클릭하면 팝업 대신 사이드 패널이 바로 열립니다."
+  },
+  "read_desc": {
+    "message": "팝오버 및 고급 레이아웃으로 읽기 경험을 향상시킵니다."
+  },
+  "read_hover": {
+    "message": "미리보기 팝오버"
+  },
+  "read_hover_desc": {
+    "message": "게시글 제목에 마우스를 올리면 클릭하지 않고도 내용을 미리 볼 수 있습니다."
+  },
+  "read_layout": {
+    "message": "다단 읽기 레이아웃"
+  },
+  "read_layout_desc": {
+    "message": "넓은 화면에서 목록, 게시글, 댓글을 나란히 배치합니다."
+  },
+  "media_desc": {
+    "message": "일괄 다운로드 및 원본 이미지 보기 옵션입니다."
+  },
+  "media_tools": {
+    "message": "미디어 갤러리 도구"
+  },
+  "media_tools_desc": {
+    "message": "원본 이미지 팝업, 일괄 선택, 중복 이미지 감지 기능을 제공합니다."
+  },
+  "sig_title": {
+    "message": "서명 이미지 자동 첨부"
+  },
+  "sig_desc": {
+    "message": "게시글 작성 시 상단에 서명 이미지(자짤)를 자동으로 삽입합니다."
+  },
+  "sig_enable": {
+    "message": "자동 첨부 사용"
+  },
+  "sig_enable_desc": {
+    "message": "새 글을 작성할 때 설정된 이미지를 에디터에 자동으로 삽입합니다."
+  },
+  "sig_image": {
+    "message": "서명 이미지 (자짤)"
+  },
+  "sig_image_desc": {
+    "message": "사용할 이미지를 선택하세요. 확장프로그램 저장 공간에 저장됩니다."
+  },
+  "sig_empty": {
+    "message": "등록된 서명 이미지가 없습니다."
+  },
+  "sig_delete": {
+    "message": "이미지 삭제"
+  },
+  "sig_save": {
+    "message": "서명 저장"
+  },
+  "auto_desc": {
+    "message": "백그라운드 모니터링 및 자동화된 작업을 구성합니다."
+  },
+  "auto_switch": {
+    "message": "전역 자동화 스위치"
+  },
+  "auto_switch_desc": {
+    "message": "모든 백그라운드 폴링 및 알림을 활성화하거나 비활성화합니다."
+  },
+  "search_desc": {
+    "message": "다중 페이지 수집 및 검색 기능입니다."
+  },
+  "search_integrated": {
+    "message": "통합 검색"
+  },
+  "search_integrated_desc": {
+    "message": "다중 페이지(20/50/100개)를 위한 사이드 패널의 통합 검색을 지원합니다."
+  },
+  "filter_desc": {
+    "message": "키워드, 유저, 또는 정규식 패턴을 기반으로 게시글을 숨기거나 강조합니다."
+  },
+  "filter_add": {
+    "message": "새 필터 규칙 추가"
+  },
+  "filter_name": {
+    "message": "규칙 이름"
+  },
+  "filter_name_ph": {
+    "message": "예: 스팸 차단"
+  },
+  "filter_pattern": {
+    "message": "패턴 / 키워드"
+  },
+  "filter_pattern_ph": {
+    "message": "키워드 또는 정규식"
+  },
+  "filter_action": {
+    "message": "동작"
+  },
+  "filter_action_hide": {
+    "message": "숨김 (제거)"
+  },
+  "filter_action_dim": {
+    "message": "흐리게 (반투명)"
+  },
+  "filter_action_blur": {
+    "message": "블러 (모자이크)"
+  },
+  "filter_action_collapse": {
+    "message": "접기"
+  },
+  "filter_action_mark": {
+    "message": "마크 (강조)"
+  },
+  "filter_btn_add": {
+    "message": "규칙 추가"
+  },
+  "filter_active": {
+    "message": "활성 필터 규칙"
+  },
+  "user_desc": {
+    "message": "특정 유저에 대한 로컬 메모를 보관합니다."
+  },
+  "user_add": {
+    "message": "유저 노트 추가"
+  },
+  "user_id": {
+    "message": "유저 식별자 (ID/IP/닉네임)"
+  },
+  "user_id_ph": {
+    "message": "식별자"
+  },
+  "user_note": {
+    "message": "노트 내용"
+  },
+  "user_note_ph": {
+    "message": "메모 텍스트"
+  },
+  "user_btn_save": {
+    "message": "노트 저장"
+  },
+  "user_saved": {
+    "message": "저장된 노트"
+  },
+  "user_empty": {
+    "message": "저장된 유저 노트가 없습니다."
+  },
+  "user_blocked": {
+    "message": "(차단됨)"
+  },
+  "comment_desc": {
+    "message": "댓글 섹션을 필터링하고 내보냅니다."
+  },
+  "comment_export": {
+    "message": "댓글 내보내기"
+  },
+  "comment_export_desc": {
+    "message": "로드된 댓글을 JSON/CSV로 내보냅니다 (페이지 내에서 처리됨)."
+  },
+  "profile_desc": {
+    "message": "갤러리별로 특정 구성 및 재정의를 설정합니다."
+  },
+  "profile_override": {
+    "message": "프로필 재정의"
+  },
+  "profile_override_desc": {
+    "message": "개별 갤러리에만 특정 필터나 레이아웃을 맞춤 설정합니다."
+  },
+  "data_desc": {
+    "message": "구성을 파일로 내보내거나 이전 백업에서 복원합니다."
+  },
+  "data_export": {
+    "message": "내보내기"
+  },
+  "data_download": {
+    "message": "백업 다운로드"
+  },
+  "data_download_desc": {
+    "message": "현재 설정, 필터, 및 유저 노트를 파일에 저장합니다."
+  },
+  "data_json": {
+    "message": "JSON 백업"
+  },
+  "data_restore": {
+    "message": "복원"
+  },
+  "data_import": {
+    "message": "백업 가져오기"
+  },
+  "data_import_desc": {
+    "message": "이전에 저장된 JSON 파일에서 구성을 복원합니다."
+  },
+  "storage_desc": {
+    "message": "확장프로그램 기본 데이터를 검사하기 위한 고급 도구입니다."
+  },
+  "storage_current": {
+    "message": "현재 스토리지 상태"
+  },
+  "storage_current_desc": {
+    "message": "현재 Chrome 로컬 스토리지의 Raw JSON 보기입니다."
+  },
+  "storage_diag": {
+    "message": "진단 도구"
+  },
+  "storage_error_logs": {
+    "message": "오류 로그"
+  },
+  "storage_error_desc": {
+    "message": "캡처된 오류 로그를 내보내거나 삭제합니다."
+  },
+  "storage_clear_logs": {
+    "message": "로그 삭제"
+  },
+  "storage_export_logs": {
+    "message": "로그 내보내기"
+  },
+  "storage_reset": {
+    "message": "초기화 (공장 초기화)"
+  },
+  "storage_reset_desc": {
+    "message": "모든 구성, 필터, 유저 노트를 삭제합니다. 이 작업은 되돌릴 수 없습니다."
+  },
+  "storage_btn_reset": {
+    "message": "모든 데이터 초기화"
+  },
+  "common_delete": {
+    "message": "삭제"
+  },
+  "common_loading": {
+    "message": "불러오는 중..."
+  },
+  "msg_theme_changed": {
+    "message": "테마 설정이 변경되었습니다."
+  },
+  "msg_auto_on": {
+    "message": "전역 자동화가 활성화되었습니다."
+  },
+  "msg_auto_off": {
+    "message": "전역 자동화가 비활성화되었습니다."
+  },
+  "msg_sidepanel_on": {
+    "message": "아이콘 클릭 시 사이드 패널이 바로 열립니다."
+  },
+  "msg_sidepanel_off": {
+    "message": "아이콘 클릭 시 팝업이 열립니다."
+  },
+  "msg_autosig_on": {
+    "message": "자짤 자동 첨부 기능이 활성화되었습니다."
+  },
+  "msg_autosig_off": {
+    "message": "자짤 자동 첨부 기능이 비활성화되었습니다."
+  },
+  "msg_sig_req": {
+    "message": "저장할 이미지 파일을 먼저 선택해주세요."
+  },
+  "msg_sig_saved": {
+    "message": "자짤 이미지가 성공적으로 저장 및 활성화되었습니다."
+  },
+  "msg_sig_del": {
+    "message": "자짤 이미지가 삭제되었습니다."
+  },
+  "msg_filter_del": {
+    "message": "필터 규칙이 삭제되었습니다."
+  },
+  "msg_filter_req": {
+    "message": "규칙 이름과 차단 패턴을 입력해주세요."
+  },
+  "msg_filter_add": {
+    "message": "새 필터 규칙이 추가되었습니다."
+  },
+  "msg_un_del": {
+    "message": "유저 노트가 삭제되었습니다."
+  },
+  "msg_un_req": {
+    "message": "유저 식별자와 메모 내용을 입력해주세요."
+  },
+  "msg_un_saved": {
+    "message": "유저 노트가 저장되었습니다."
+  },
+  "msg_export_json": {
+    "message": "JSON 백업 파일이 다운로드되었습니다."
+  },
+  "msg_export_csv": {
+    "message": "CSV 파일이 다운로드되었습니다."
+  },
+  "msg_export_html": {
+    "message": "HTML 북마크 파일이 다운로드되었습니다."
+  },
+  "msg_restore_success": {
+    "message": "성공적으로 복원되었습니다 ($COUNT$개 데이터 키)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "msg_restore_fail": {
+    "message": "복원 실패: $ERROR$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "msg_reset_confirm": {
+    "message": "스토리지를 초기화하시겠습니까? 모든 설정이 기본값으로 돌아갑니다."
+  },
+  "msg_reset_success": {
+    "message": "스토리지가 성공적으로 초기화되었습니다."
+  },
+  "msg_logs_cleared": {
+    "message": "진단 로그가 삭제되었습니다."
+  }
+}

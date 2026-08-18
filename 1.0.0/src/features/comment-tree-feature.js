@@ -117,7 +117,7 @@ export class CommentTreeFeature extends BaseFeature {
       }
     }
 
-    if (configManager.get('commentTreeEnabled') !== false) {
+    if (configManager.get('commentTreeEnabled') === true) {
       this._reorder(list, parsed);
     }
 

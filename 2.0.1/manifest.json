@@ -1,0 +1,90 @@
+{
+  "manifest_version": 3,
+  "name": "DC Ultimate",
+  "version": "2.0.0",
+  "description": "DCInside 브라우징 강화 확장 — 검색 수집, 키워드 알림, 유저 차단/분석, 아카이브 박제, 작성 도우미",
+  "default_locale": "ko",
+  "icons": {
+    "16": "assets/icons/icon.png",
+    "48": "assets/icons/icon.png",
+    "128": "assets/icons/icon.png"
+  },
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "*://*.dcinside.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.dcinside.com/*"
+      ],
+      "js": [
+        "src/content/dc-dark-sync.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.dcinside.com/*"
+      ],
+      "js": [
+        "src/content/loader.js"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://gall.dcinside.com/*board/write*",
+        "*://gall.dcinside.com/*mgallery/board/write*",
+        "*://gall.dcinside.com/*mini/board/write*"
+      ],
+      "js": [
+        "src/content/auto-sig-bridge.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "src/ui/popup/popup.html",
+    "default_title": "DC Ultimate",
+    "default_icon": {
+      "16": "assets/icons/icon.png",
+      "48": "assets/icons/icon.png",
+      "128": "assets/icons/icon.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "src/ui/sidepanel/sidepanel.html"
+  },
+  "options_page": "src/ui/options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/*",
+        "src/core/*",
+        "src/features/*",
+        "src/adapters/*",
+        "src/parser/*",
+        "src/utils/*",
+        "src/auth/*",
+        "assets/*"
+      ],
+      "matches": [
+        "*://*.dcinside.com/*"
+      ]
+    }
+  ]
+}
