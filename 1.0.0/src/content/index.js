@@ -20,18 +20,11 @@ import { searchAggregationFeature } from '../features/search-aggregation-feature
 import { userNotesFeature } from '../features/user-notes-feature.js';
 import { commentToolsFeature } from '../features/comment-tools-feature.js';
 import { mediaToolsFeature } from '../features/media-tools-feature.js';
-import { aiFeature } from '../features/ai-feature.js';
-import { autoSignatureFeature } from '../features/auto-signature-feature.js';
 import { userBlockFeature } from '../features/user-block-feature.js';
 import { spamFilterFeature } from '../features/spam-filter-feature.js';
 import { hotHighlightFeature } from '../features/hot-highlight-feature.js';
 import { infiniteScrollFeature } from '../features/infinite-scroll-feature.js';
-import { draftAutosaveFeature } from '../features/draft-autosave-feature.js';
-import { dcconFavoritesFeature } from '../features/dccon-favorites-feature.js';
-import { markdownCodeFeature } from '../features/markdown-code-feature.js';
 import { archiveCacheFeature } from '../features/archive-cache-feature.js';
-import { archiveCaptureFeature } from '../features/archive-capture-feature.js';
-import { commentTreeFeature } from '../features/comment-tree-feature.js';
 import { userAnalyticsFeature } from '../features/user-analytics-feature.js';
 
 // Parsers & Adapters
@@ -63,6 +56,68 @@ async function runPhase(name, fn) {
 }
 
 /**
+ * 페이지 종류별로만 필요한 피처는 초기 번들에서 빼고 그때 가서 불러온다.
+ * 목록 페이지(가장 흔한 경우)의 콘텐츠 스크립트 그래프가 301KB -> 202KB로 줄어든다.
+ * @type {Record<string, import('../features/base-feature.js').BaseFeature|null>}
+ */
+const lazy = {
+  ai: null,
+  autoSignature: null,
+  draftAutosave: null,
+  dcconFavorites: null,
+  markdownCode: null,
+  archiveCapture: null,
+  commentTree: null
+};
+
+const LAZY_FEATURES = {
+  ai: () => import('../features/ai-feature.js').then(m => m.aiFeature),
+  autoSignature: () => import('../features/auto-signature-feature.js').then(m => m.autoSignatureFeature),
+  draftAutosave: () => import('../features/draft-autosave-feature.js').then(m => m.draftAutosaveFeature),
+  dcconFavorites: () => import('../features/dccon-favorites-feature.js').then(m => m.dcconFavoritesFeature),
+  markdownCode: () => import('../features/markdown-code-feature.js').then(m => m.markdownCodeFeature),
+  archiveCapture: () => import('../features/archive-capture-feature.js').then(m => m.archiveCaptureFeature),
+  commentTree: () => import('../features/comment-tree-feature.js').then(m => m.commentTreeFeature)
+};
+
+/**
+ * 현재 URL에 필요한 지연 피처 목록.
+ * @returns {string[]}
+ */
+function lazyFeaturesForPage() {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  if (/\/board\/(write|modify)/.test(path)) {
+    return ['autoSignature', 'draftAutosave', 'markdownCode', 'dcconFavorites'];
+  }
+  if (/\/board\/view/.test(path)) {
+    return ['archiveCapture', 'commentTree', 'dcconFavorites', 'markdownCode', 'ai'];
+  }
+  return []; // 목록/검색 페이지는 위 피처가 모두 불필요
+}
+
+/**
+ * 필요한 지연 피처를 불러와 등록하고, 설정에서 켜져 있으면 활성화한다.
+ */
+async function loadPageFeatures() {
+  const wanted = lazyFeaturesForPage();
+
+  for (const key of wanted) {
+    if (lazy[key]) continue;
+    try {
+      const feature = await LAZY_FEATURES[key]();
+      lazy[key] = feature;
+      featureManager.register(feature);
+      if (configManager.get(feature.id) ?? true) {
+        await feature.enable();
+      }
+    } catch (err) {
+      logger.warn(`Content Script: lazy feature [${key}] failed to load:`, err);
+    }
+  }
+}
+
+/**
  * Re-applies the DOM-mutating list features (block / spam / highlight) plus the
  * dccon bar. Called after page detection and whenever new rows appear.
  * @param {Object} pageInfo
@@ -79,15 +134,15 @@ function applyListFeatures(pageInfo) {
   }
 
   try {
-    if (dcconFavoritesFeature.enabled) dcconFavoritesFeature.renderBar();
+    if (lazy.dcconFavorites?.enabled) lazy.dcconFavorites.renderBar();
   } catch (err) {
     logger.debug('Content Script: dccon bar render failed:', err);
   }
 
   // 댓글은 본문 로드 후 비동기로 붙으므로 변경마다 다시 처리한다.
   try {
-    if (commentTreeFeature.enabled) commentTreeFeature.apply();
-    if (archiveCaptureFeature.enabled) archiveCaptureFeature.mountButton();
+    if (lazy.commentTree?.enabled) lazy.commentTree.apply();
+    if (lazy.archiveCapture?.enabled) lazy.archiveCapture.mountButton();
     if (archiveCacheFeature.enabled) archiveCacheFeature.captureSoon();
   } catch (err) {
     logger.debug('Content Script: archive/comment pass failed:', err);
@@ -157,18 +212,11 @@ async function initContentEngine() {
     featureManager.register(userNotesFeature);
     featureManager.register(commentToolsFeature);
     featureManager.register(mediaToolsFeature);
-    featureManager.register(aiFeature);
-    featureManager.register(autoSignatureFeature);
     featureManager.register(userBlockFeature);
     featureManager.register(spamFilterFeature);
     featureManager.register(hotHighlightFeature);
     featureManager.register(infiniteScrollFeature);
-    featureManager.register(draftAutosaveFeature);
-    featureManager.register(dcconFavoritesFeature);
-    featureManager.register(markdownCodeFeature);
     featureManager.register(archiveCacheFeature);
-    featureManager.register(archiveCaptureFeature);
-    featureManager.register(commentTreeFeature);
     featureManager.register(userAnalyticsFeature);
     await featureManager.init();
   });
@@ -199,6 +247,8 @@ async function initContentEngine() {
         currentPageInfo.galleryName = galleryInfo.galleryName;
       }
     }
+
+    await loadPageFeatures();
 
     applyDOMFilters();
     applyListFeatures(currentPageInfo);

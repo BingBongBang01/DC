@@ -173,7 +173,7 @@ export class UserBlockFeature extends BaseFeature {
       } catch (err) {
         logger.debug('UserBlockFeature: failed to record rule hits:', err);
       }
-    }, 3000);
+    }, 10000); // 스크롤 중 규칙 배열 전체를 반복 저장하지 않도록 넉넉히 모은다
   }
 }
 

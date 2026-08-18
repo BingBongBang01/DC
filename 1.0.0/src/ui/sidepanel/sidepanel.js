@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // The panel body scrolls per view; start each one at the top.
     document.querySelector('.sp-main')?.scrollTo({ top: 0 });
 
+    // 방금 연 서비스만 즉시 최신화한다.
+    if (target === 'alerts' && typeof renderNotifications === 'function') {
+      renderKeywordAlerts();
+      renderNotifications();
+    }
+
     if (persist) configManager.set('spActiveView', target);
   }
 
@@ -765,10 +771,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderKeywordAlerts();
   renderNotifications();
+
+  // 패널이 다른 서비스를 보고 있을 때까지 15초마다 목록을 다시 그리면 메시지와
+  // DOM 작업만 낭비된다. 알림 서비스가 열려 있을 때만 갱신하고, 타일로 돌아올
+  // 때 한 번 새로 그린다. (읽지 않은 배지는 백그라운드 브로드캐스트로 갱신됨)
   setInterval(() => {
-    renderKeywordAlerts();
-    renderNotifications();
-  }, 15000); // 15 sec refresh for status
+    if (document.hidden) return;
+    if (document.querySelector('.sp-view[data-view="alerts"]')?.classList.contains('active')) {
+      renderKeywordAlerts();
+      renderNotifications();
+    }
+  }, 15000);
 
   // --- Phase 1: Quick Access & Current Gallery Actions ---
   

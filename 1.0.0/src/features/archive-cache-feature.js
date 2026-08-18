@@ -20,6 +20,9 @@ export class ArchiveCacheFeature extends BaseFeature {
     this.galleryId = '';
     this.postId = null;
     this._captureTimer = null;
+    /** 이번 페이지에서 이미 보낸 항목 — 같은 행을 반복 전송하지 않는다. */
+    this._sentPosts = new Set();
+    this._sentComments = new Set();
   }
 
   async onEnable() {
@@ -41,6 +44,8 @@ export class ArchiveCacheFeature extends BaseFeature {
   }
 
   _refreshContext() {
+    this._sentPosts.clear();
+    this._sentComments.clear();
     const context = parseGalleryUrl(window.location.href);
     this.galleryId = context.valid ? context.galleryId : '';
     const url = new URL(window.location.href);
@@ -106,9 +111,24 @@ export class ArchiveCacheFeature extends BaseFeature {
       })).filter(comment => comment.id);
     }
 
-    if (posts.length === 0 && comments.length === 0) return { posts: 0, comments: 0 };
+    // 무한 스크롤이나 DOM 변경마다 목록 전체를 다시 보내면 500행 기준 140KB를
+    // 매번 직렬화하고 IndexedDB에도 같은 수만큼 쓰기가 발생한다. 새로 등장한
+    // 항목만 추린다. (본문 레코드는 body/media가 추가되므로 항상 보낸다)
+    const freshPosts = posts.filter(post => {
+      if (post.body !== undefined) return true;
+      if (this._sentPosts.has(post.id)) return false;
+      this._sentPosts.add(post.id);
+      return true;
+    });
+    const freshComments = comments.filter(comment => {
+      if (this._sentComments.has(comment.id)) return false;
+      this._sentComments.add(comment.id);
+      return true;
+    });
 
-    const res = await messageRouter.send(MessageAction.ARCHIVE_PUT, { posts, comments });
+    if (freshPosts.length === 0 && freshComments.length === 0) return { posts: 0, comments: 0 };
+
+    const res = await messageRouter.send(MessageAction.ARCHIVE_PUT, { posts: freshPosts, comments: freshComments });
     const saved = res && res.success ? res.data : { posts: 0, comments: 0 };
     logger.debug(`ArchiveCache: stored ${saved.posts || 0} post(s), ${saved.comments || 0} comment(s).`);
     return saved;
