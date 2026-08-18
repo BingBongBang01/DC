@@ -11,7 +11,6 @@ import { keywordAlertManager } from '../core/keyword-alert/keyword-alert-manager
 import { notificationManager } from '../core/keyword-alert/notification-manager.js';
 import { matchPost } from '../core/keyword-alert/keyword-matcher.js';
 import { parseGalleryUrl } from '../core/gallery-context.js';
-<<<<<<< HEAD
 import { autoLoginService } from '../auth/auto-login-service.js';
 import { getAutoLoginState, updateAutoLoginState, toPublicStatus } from '../auth/credential-store.js';
 import { isDcInsideUrl, isLogoutUrl, LOGIN_ORIGIN } from '../auth/dc-login-page.js';
@@ -20,9 +19,7 @@ import { draftStore } from '../core/draft/draft-store.js';
 import { dcconStore } from '../core/dccon/dccon-store.js';
 import { archiveDB, ArchiveDB } from '../core/archive/archive-db.js';
 import { summarizeUserActivity, galleryShareStats, suspiciousIpBands } from '../core/archive/activity-analyzer.js';
-=======
 import { isDCInsideUrl } from '../core/site-detector.js';
->>>>>>> 54c588b7dbcc05c4ad2ffdb7dd0873311a5a544d
 
 logger.info('Service Worker: Starting DC Ultimate background process...');
 
@@ -497,7 +494,8 @@ function registerMessageHandlers() {
     return autoLoginService.evaluate({
       tabId,
       state: payload && payload.state,
-      isLoginPage: Boolean(payload && payload.isLoginPage)
+      isLoginPage: Boolean(payload && payload.isLoginPage),
+      referrer: (payload && payload.referrer) || ''
     });
   });
 

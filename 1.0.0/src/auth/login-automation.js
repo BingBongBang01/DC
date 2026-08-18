@@ -53,7 +53,10 @@ export class LoginAutomation {
       const response = await messageRouter.send(MessageAction.AUTO_LOGIN_REQUEST, {
         state,
         isLoginPage: onLoginPage,
-        url
+        url,
+        // 디시 밖에서 새로 들어왔는지 판단하는 근거. tabs 권한 없이도 알 수 있도록
+        // 페이지가 직접 알려 준다(백그라운드의 changeInfo.url은 권한에 따라 비어 있을 수 있음).
+        referrer: typeof document !== 'undefined' ? document.referrer || '' : ''
       });
 
       const decision = (response && response.success && response.data) || { action: 'none' };

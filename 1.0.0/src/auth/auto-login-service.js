@@ -13,6 +13,7 @@
  *    `chrome.storage.session`.
  */
 import { logger } from '../core/logger.js';
+import { isDcInsideUrl } from './dc-login-page.js';
 import {
   getAutoLoginState,
   updateAutoLoginState,
@@ -104,10 +105,10 @@ export class AutoLoginService {
 
   /**
    * Central decision for a content script asking "should I sign in here?".
-   * @param {{tabId: number, state: string, isLoginPage: boolean}} context
+   * @param {{tabId: number, state: string, isLoginPage: boolean, referrer?: string}} context
    * @returns {Promise<{action: 'none'|'navigate'|'fill', reason: string|null}>}
    */
-  async evaluate({ tabId, state, isLoginPage }) {
+  async evaluate({ tabId, state, isLoginPage, referrer = '' }) {
     const stored = await getAutoLoginState();
 
     if (state === 'logged_in') {
@@ -129,7 +130,16 @@ export class AutoLoginService {
     const now = Date.now();
 
     if (session.suppressedTabs[key] !== undefined) {
-      return { action: 'none', reason: 'user_logged_out' };
+      // 디시 밖에서(또는 새 창/새 탭으로) 다시 들어온 경우는 "새로 들어온 것"이므로
+      // 로그아웃 유지 상태를 풀어 준다. 탭 URL 추적(tabs 권한)에 의존하지 않는 판단이다.
+      const cameFromOutside = !referrer || !isDcInsideUrl(referrer);
+      if (!cameFromOutside) {
+        return { action: 'none', reason: 'user_logged_out' };
+      }
+
+      delete session.suppressedTabs[key];
+      await this._writeSession(session);
+      logger.info(`AutoLoginService: tab ${tabId} re-entered DCInside from outside — auto login re-armed.`);
     }
 
     let attempt = session.attempts[key];

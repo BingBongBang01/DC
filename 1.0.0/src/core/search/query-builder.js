@@ -42,15 +42,11 @@ export class QueryBuilder {
    * @param {number} pageNum Page number
    * @returns {string}
    */
-<<<<<<< HEAD
-  buildUrl(query, pageNum = 1) {
+  buildUrl(query, pageNum = 1, searchPos = null) {
     // Callers hand us either vocabulary ('minor' from PageDetector, 'mgallery'
     // from GalleryContext / Keyword Alerts), so normalize before branching.
     const galleryType = normalizeGalleryType(query.galleryType);
 
-=======
-  buildUrl(query, pageNum = 1, searchPos = null) {
->>>>>>> 54c588b7dbcc05c4ad2ffdb7dd0873311a5a544d
     let baseUrl = 'https://gall.dcinside.com/board/lists/';
     if (galleryType === 'minor') {
       baseUrl = 'https://gall.dcinside.com/mgallery/board/lists/';
