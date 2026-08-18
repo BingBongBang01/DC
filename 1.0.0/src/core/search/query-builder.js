@@ -8,7 +8,11 @@ export class SearchQuery {
   constructor(data = {}) {
     this.keyword = data.keyword || '';
     this.galleryId = data.galleryId || 'programming';
-    this.galleryType = data.galleryType || 'major'; // 'major', 'minor', 'mini'
+    // Accepted values: 'major', 'minor'/'mgallery' (마이너 갤러리), 'mini' (미니 갤러리).
+    // Normalized here because the rest of the codebase (gallery-context.js,
+    // dc-url-parser.js, sidepanel.js) produces 'mgallery' for minor galleries, not 'minor'.
+    const rawType = data.galleryType || 'major';
+    this.galleryType = rawType === 'mgallery' ? 'minor' : rawType;
     this.subject = data.subject || '';
     this.author = data.author || '';
     this.startDate = data.startDate || null;
@@ -38,11 +42,15 @@ export class QueryBuilder {
    * @param {number} pageNum Page number
    * @returns {string}
    */
+<<<<<<< HEAD
   buildUrl(query, pageNum = 1) {
     // Callers hand us either vocabulary ('minor' from PageDetector, 'mgallery'
     // from GalleryContext / Keyword Alerts), so normalize before branching.
     const galleryType = normalizeGalleryType(query.galleryType);
 
+=======
+  buildUrl(query, pageNum = 1, searchPos = null) {
+>>>>>>> 54c588b7dbcc05c4ad2ffdb7dd0873311a5a544d
     let baseUrl = 'https://gall.dcinside.com/board/lists/';
     if (galleryType === 'minor') {
       baseUrl = 'https://gall.dcinside.com/mgallery/board/lists/';
@@ -68,7 +76,20 @@ export class QueryBuilder {
       params.set('headid', query.subject);
     }
 
-    params.set('page', String(pageNum));
+    if (query.keyword) {
+      // Keyword search results are NOT paginated via a plain incrementing `page` number.
+      // DCInside's search keeps `page=1` fixed and instead advances through results using
+      // an opaque `search_pos` cursor taken from the previous response's "다음 검색" link
+      // (confirmed against live gall.dcinside.com search markup). Passing page=2,3,... here
+      // without a matching search_pos causes the server to return unrelated/unfiltered
+      // content instead of the next chunk of search results.
+      params.set('page', '1');
+      if (searchPos !== null && searchPos !== undefined && searchPos !== '') {
+        params.set('search_pos', String(searchPos));
+      }
+    } else {
+      params.set('page', String(pageNum));
+    }
 
     return `${baseUrl}?${params.toString()}`;
   }

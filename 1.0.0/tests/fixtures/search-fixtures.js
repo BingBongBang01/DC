@@ -30,6 +30,7 @@ export const MOCK_SEARCH_PAGE_1 = `
     </tbody>
   </table>
 </div>
+<a href="/board/lists/?id=programming&page=1&search_pos=-1001&s_type=search_subject_memo&s_keyword=2TB" class="search_next">다음 검색</a>
 `;
 
 export const MOCK_SEARCH_PAGE_2 = `
@@ -74,6 +75,7 @@ export const MOCK_SEARCH_PAGE_2 = `
     </tbody>
   </table>
 </div>
+<a href="/board/lists/?id=programming&page=1&search_pos=-1002&s_type=search_subject_memo&s_keyword=2TB" class="search_next">다음 검색</a>
 `;
 
 export const MOCK_SEARCH_PAGE_3 = `
@@ -98,6 +100,7 @@ export const MOCK_SEARCH_PAGE_3 = `
     </tbody>
   </table>
 </div>
+<a href="/board/lists/?id=programming&page=1&search_pos=-1003&s_type=search_subject_memo&s_keyword=2TB" class="search_next">다음 검색</a>
 `;
 
 export const MOCK_SEARCH_PAGE_4 = `

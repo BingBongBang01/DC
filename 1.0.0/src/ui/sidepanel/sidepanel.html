@@ -11,8 +11,13 @@
   <div class="sp-container">
     <header class="sp-header">
       <div class="sp-header-titles">
-        <h1 class="sp-title">DC Ultimate</h1>
-        <h2 class="sp-subtitle">Workspace</h2>
+        <h1 class="sp-title">DC Extensions</h1>
+      </div>
+      <div style="flex: 1; display: flex; justify-content: flex-end; padding-right: 12px;">
+        <button type="button" id="sp-btn-donation" style="background-color: var(--md-sys-color-primary, #FF5E5B); color: var(--md-sys-color-on-primary, white); border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          도네이션
+        </button>
       </div>
       <div class="sp-status">
         <span class="sp-status-dot" aria-hidden="true"></span>
@@ -105,11 +110,12 @@
             <div class="sp-form-group-row">
               <div class="sp-form-group sp-flex-1">
                 <label for="sp-search-pages" class="sp-label">수집 페이지 수</label>
-                <select id="sp-search-pages" class="sp-select">
-                  <option value="5">5 페이지</option>
-                  <option value="10" selected>10 페이지</option>
-                  <option value="20">20 페이지</option>
-                </select>
+                <input type="number" id="sp-search-pages" class="sp-input" min="1" max="100" step="1" value="10" inputmode="numeric" />
+                <div class="sp-pages-presets" id="sp-search-pages-presets">
+                  <button type="button" class="sp-pages-preset-btn" data-pages="5">5</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="10">10</button>
+                  <button type="button" class="sp-pages-preset-btn" data-pages="20">20</button>
+                </div>
               </div>
               <div class="sp-form-group sp-flex-1">
                 <label for="sp-results-per-page" class="sp-label">페이지당 결과</label>
@@ -145,6 +151,45 @@
           </div>
         </div>
       </section>
+<<<<<<< HEAD
+=======
+
+      <!-- Current Gallery Actions -->
+      <section id="sp-current-gallery-section" class="sp-section hidden" aria-labelledby="heading-current-gallery">
+        <div class="sp-results-header" style="padding-bottom: 4px; border-bottom: none;">
+           <h2 id="heading-current-gallery" class="sp-section-title">현재 갤러리</h2>
+           <button type="button" id="sp-btn-favorite-toggle" class="sp-btn-icon-small" title="즐겨찾기 추가/해제">
+             <svg class="icon-star" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+             </svg>
+           </button>
+        </div>
+        <div id="sp-current-gallery-name" style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--md-sys-color-on-surface);"></div>
+        <div class="sp-form-group-row mt-2">
+           <button type="button" id="sp-btn-nav-all" class="sp-btn-outline sp-flex-1">전체글</button>
+           <button type="button" id="sp-btn-nav-best" class="sp-btn-outline sp-flex-1">개념글</button>
+           <button type="button" id="sp-btn-nav-notice" class="sp-btn-outline sp-flex-1">공지</button>
+        </div>
+      </section>
+
+      <!-- Quick Access (Recent & Favorites) -->
+      <section class="sp-section hidden" aria-labelledby="heading-quick-access" style="display: none;">
+        <h2 id="heading-quick-access" class="sp-section-title">빠른 접근</h2>
+        
+        <div class="sp-quick-tabs">
+          <button type="button" class="sp-quick-tab active" data-target="sp-recent-galleries">최근 방문</button>
+          <button type="button" class="sp-quick-tab" data-target="sp-favorite-galleries">즐겨찾기</button>
+        </div>
+
+        <div id="sp-recent-galleries" class="sp-quick-content active">
+          <!-- Recent gallery list items go here -->
+        </div>
+        <div id="sp-favorite-galleries" class="sp-quick-content hidden">
+          <!-- Favorite gallery list items go here -->
+        </div>
+      </section>
+
+>>>>>>> 54c588b7dbcc05c4ad2ffdb7dd0873311a5a544d
       <!-- Search Results -->
       <section id="sp-results-section" class="sp-section hidden" aria-labelledby="heading-results">
         <div class="sp-results-header">
@@ -206,11 +251,16 @@
       <!-- Keyword Alerts Section -->
       <section class="sp-section" aria-labelledby="heading-keyword-alerts">
         <div class="sp-results-header">
+<<<<<<< HEAD
           <h2 id="heading-keyword-alerts" class="sp-section-title">키워드 알림</h2>
           <div style="display:flex; gap:4px;">
             <button type="button" id="sp-btn-scan-now" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">지금 검사</button>
             <button type="button" id="sp-btn-add-alert" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">+ 알림 추가</button>
           </div>
+=======
+          <h2 id="heading-keyword-alerts" class="sp-section-title">키워드 알림 구현중</h2>
+          <button type="button" id="sp-btn-add-alert" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">+ 알림 추가</button>
+>>>>>>> 54c588b7dbcc05c4ad2ffdb7dd0873311a5a544d
         </div>
 
         <!-- Inline add form: the Side Panel cannot show window.prompt() dialogs -->
