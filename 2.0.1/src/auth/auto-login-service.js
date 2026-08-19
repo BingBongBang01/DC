@@ -234,8 +234,8 @@ export class AutoLoginService {
   _notify(title, message) {
     if (typeof chrome === 'undefined' || !chrome.notifications || !chrome.notifications.create) return;
     const iconUrl = chrome.runtime && chrome.runtime.getURL
-      ? chrome.runtime.getURL('assets/icons/dc_ultimate_icon_transparent.png')
-      : 'assets/icons/dc_ultimate_icon_transparent.png';
+      ? chrome.runtime.getURL('assets/icons/icon128.png')
+      : 'assets/icons/icon128.png';
     try {
       chrome.notifications.create(`auto_login_${Date.now()}`, {
         type: 'basic', iconUrl, title, message, priority: 2

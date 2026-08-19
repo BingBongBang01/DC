@@ -43,6 +43,38 @@ Manifest V3 규격을 만족하며, 성능 최적화(Debounce/Throttle/LRU Cache
 
 ---
 
+## 🎨 아이콘
+
+`assets/icons/master/icon-2048.png`(2048×2048 원본)에서 크기별 아이콘을 생성합니다.
+
+```bash
+npm run icons
+```
+
+`icon16.png` / `icon48.png` / `icon128.png` 세 파일을 만듭니다(알림 `iconUrl` 도 `icon128.png` 사용).
+생성된 PNG는 `IHDR` / `IDAT` / `IEND` 청크만 담고 있습니다 — 이미지 편집기가 남기는
+사설 청크(`caBX` 등)나 과대 해상도가 섞이면 크롬이 확장 프로그램 설치 시점에
+`'icon.png' 이미지를 디코딩하지 못했습니다` 오류를 냅니다. `manifest.json`의
+`icons` / `action.default_icon` 경로는 반드시 이 스크립트가 만든 파일을 가리켜야 합니다.
+
+## 📦 스토어 업로드용 압축
+
+`2.0.1` 폴더를 압축할 때 다음을 제외합니다.
+
+* `node_modules/` — 개발 의존성(jsdom)
+* `tests/` — 테스트 픽스처
+* `assets/icons/master/` — 아이콘 원본 (약 3.2 MB)
+* `*.zip` — 기존 패키지 산출물
+
+압축 파일 내부 경로 구분자는 반드시 슬래시(`/`)여야 합니다. 역슬래시(`assets\icons\icon.png`)로
+저장하는 도구를 쓰면 크롬이 폴더 구조를 인식하지 못해 같은 디코딩 오류가 발생합니다.
+
+```bash
+zip -r ../dc-ultimate.zip . -x 'node_modules/*' 'tests/*' 'assets/icons/master/*' '*.zip'
+```
+
+---
+
 ## 🧪 단원 테스트 실행
 
 ```bash
