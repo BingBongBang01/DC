@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "node tests/run-tests.js",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "pack": "node scripts/pack.mjs"
   },
   "keywords": [
     "dcinside",

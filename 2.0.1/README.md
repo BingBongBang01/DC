@@ -59,15 +59,25 @@ npm run icons
 
 ## 📦 스토어 업로드용 압축
 
-`2.0.1` 폴더를 압축할 때 다음을 제외합니다.
+```bash
+npm run pack        # → dist/dc-ultimate-<version>.zip
+```
 
-* `node_modules/` — 개발 의존성(jsdom)
-* `tests/` — 테스트 픽스처
+`manifest.json`의 버전으로 이름을 붙이고, 다음을 제외한 나머지를 담습니다.
+
+* `node_modules/`, `package.json`, `package-lock.json` — 개발 의존성
+* `tests/`, `scripts/`, `docs/`, `.gitattributes` — 개발용 파일
 * `assets/icons/master/` — 아이콘 원본 (약 3.2 MB)
-* `*.zip` — 기존 패키지 산출물
+* `dist/`, `*.zip` — 패키지 산출물
 
-압축 파일 내부 경로 구분자는 반드시 슬래시(`/`)여야 합니다. 역슬래시(`assets\icons\icon.png`)로
-저장하는 도구를 쓰면 크롬이 폴더 구조를 인식하지 못해 같은 디코딩 오류가 발생합니다.
+압축 파일 내부 경로 구분자는 **반드시 슬래시(`/`)** 여야 합니다 — ZIP 스펙(APPNOTE 4.4.17)이
+요구하는 형식입니다. 역슬래시로 저장하는 도구를 쓰면 크롬이 `assets\icons\icon128.png`를
+폴더가 아닌 하나의 파일명으로 읽어, manifest가 가리키는 경로가 사라지고 같은 디코딩 오류로
+설치가 실패합니다. `npm run pack`은 항상 슬래시로 기록하고, 역슬래시가 섞이면 실패합니다.
+`manifest.json`과 `package.json`의 버전이 어긋나거나 manifest가 선언한 아이콘이 패키지에
+없을 때도 압축을 중단합니다.
+
+직접 압축한다면 슬래시를 쓰는 도구로 하세요.
 
 ```bash
 zip -r ../dc-ultimate.zip . -x 'node_modules/*' 'tests/*' 'assets/icons/master/*' '*.zip'

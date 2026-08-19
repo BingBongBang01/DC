@@ -15,6 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { fileURLToPath } from 'url';
+import { crc32 } from './lib/crc32.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICONS_DIR = path.join(__dirname, '../assets/icons');
@@ -195,26 +196,6 @@ function chunk(type, data) {
   body.copy(out, 4);
   out.writeUInt32BE(crc32(body), body.length + 4);
   return out;
-}
-
-const CRC_TABLE = (() => {
-  const table = new Int32Array(256);
-  for (let n = 0; n < 256; n += 1) {
-    let c = n;
-    for (let k = 0; k < 8; k += 1) {
-      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    }
-    table[n] = c;
-  }
-  return table;
-})();
-
-function crc32(buffer) {
-  let c = -1;
-  for (let i = 0; i < buffer.length; i += 1) {
-    c = CRC_TABLE[(c ^ buffer[i]) & 0xff] ^ (c >>> 8);
-  }
-  return (c ^ -1) >>> 0;
 }
 
 /** IHDR / IDAT / IEND 만 담은 PNG 로 인코딩한다. */

@@ -8,6 +8,9 @@
 - **알림 아이콘 용량**: `chrome.notifications.create`에 2.68MB 아이콘을 넘기던 `src/core/notifications/notification-manager.js`를 포함해 알림 3곳(키워드 알림, 자동 로그인)의 `iconUrl`을 `assets/icons/icon128.png`(11.6KB)로 통일했습니다.
 - **확장자와 실제 형식이 다른 이미지**: `assets/icons/dc_ultimate_icon.png`는 실제로 JPEG였습니다. 미참조 원본 이미지들과 함께 `assets/icons/master/`로 옮기고 확장자를 바로잡았습니다. 패키지에 실리는 `assets/icons/` 용량은 3.2MB → 16KB가 되었습니다.
 
+### Added — 패키징
+- **`npm run pack`**: 스토어 업로드용 zip 을 만드는 `scripts/pack.mjs` 를 추가했습니다(외부 의존성 없음). 엔트리 이름을 항상 슬래시(`/`)로 기록합니다 — 역슬래시(`assets\icons\icon128.png`)로 저장하는 압축 도구를 쓰면 크롬이 폴더 구조를 인식하지 못해 아이콘 경로가 사라지고 동일한 디코딩 오류로 설치가 실패합니다. 저장소에 있던 `DC-Ultimate-v1.0.0-store.zip` 이 그 경우로, 91개 엔트리 중 90개가 역슬래시였습니다. `node_modules/` · `tests/` · `scripts/` · `docs/` · `assets/icons/master/` 를 제외하며, manifest 와 package 의 버전이 어긋나거나 manifest 가 선언한 아이콘이 패키지에 없으면 실패합니다.
+
 ## [2.0.0] - 2026-08-19
 
 ### Performance
