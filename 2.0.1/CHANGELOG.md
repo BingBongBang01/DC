@@ -1,5 +1,16 @@
 # DC Ultimate Changelog
 
+## [Unreleased]
+
+### Fixed — 확장 프로그램 아이콘
+- **설치 시 `'icon.png' 이미지를 디코딩하지 못했습니다` 오류**: `manifest.json`의 `icons`·`action.default_icon` 여섯 칸이 모두 2048×2048 / 2.68MB 짜리 `assets/icons/icon.png` 하나를 가리켰고, 이 파일에는 IHDR 직후에 23,733바이트 사설 청크(`caBX`)가 들어 있었습니다. 크롬은 설치 시점에 manifest에 선언된 모든 이미지를 미리 디코딩하는데, 이 단계에서 거부되어 설치가 실패했습니다. 크기별 아이콘(`icon16.png` / `icon48.png` / `icon128.png`)을 만들어 각 칸이 알맞은 파일을 가리키도록 했습니다.
+- **`icon16.png` / `icon48.png` / `icon128.png` 가 깨진 PNG였던 문제**: 세 파일 모두 70바이트에 IHDR 청크가 없어 어떤 디코더로도 열리지 않았습니다(`file` 판정: `data`). 원인은 생성 스크립트에 하드코딩된 base64 리터럴의 오타 한 글자(`…SU6EUgAA…`, 정상값은 `…SUhEUgAA…`)였습니다. 1×1 플레이스홀더를 만들던 `assets/icons/make.js` · `assets/icons/generate-icons.js`를 제거하고, 원본에서 실제 아이콘을 축소 생성하는 `scripts/generate-icons.mjs`(`npm run icons`, 외부 의존성 없음)로 대체했습니다.
+- **알림 아이콘 용량**: `chrome.notifications.create`에 2.68MB 아이콘을 넘기던 `src/core/notifications/notification-manager.js`를 포함해 알림 3곳(키워드 알림, 자동 로그인)의 `iconUrl`을 `assets/icons/icon128.png`(11.6KB)로 통일했습니다.
+- **확장자와 실제 형식이 다른 이미지**: `assets/icons/dc_ultimate_icon.png`는 실제로 JPEG였습니다. 미참조 원본 이미지들과 함께 `assets/icons/master/`로 옮기고 확장자를 바로잡았습니다. 패키지에 실리는 `assets/icons/` 용량은 3.2MB → 16KB가 되었습니다.
+
+### Added — 패키징
+- **`npm run pack`**: 스토어 업로드용 zip 을 만드는 `scripts/pack.mjs` 를 추가했습니다(외부 의존성 없음). 엔트리 이름을 항상 슬래시(`/`)로 기록합니다 — 역슬래시(`assets\icons\icon128.png`)로 저장하는 압축 도구를 쓰면 크롬이 폴더 구조를 인식하지 못해 아이콘 경로가 사라지고 동일한 디코딩 오류로 설치가 실패합니다. 저장소에 있던 `DC-Ultimate-v1.0.0-store.zip` 이 그 경우로, 91개 엔트리 중 90개가 역슬래시였습니다. `node_modules/` · `tests/` · `scripts/` · `docs/` · `assets/icons/master/` 를 제외하며, manifest 와 package 의 버전이 어긋나거나 manifest 가 선언한 아이콘이 패키지에 없으면 실패합니다.
+
 ## [2.0.0] - 2026-08-19
 
 ### Performance

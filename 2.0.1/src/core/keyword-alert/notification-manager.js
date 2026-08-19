@@ -6,7 +6,7 @@ import { storageRepository } from '../storage-repository.js';
 import { MessageAction } from '../message-contract.js';
 import { logger } from '../logger.js';
 
-const NOTIFICATION_ICON = 'assets/icons/dc_ultimate_icon_transparent.png';
+const NOTIFICATION_ICON = 'assets/icons/icon128.png';
 
 export class NotificationManager {
   /**
