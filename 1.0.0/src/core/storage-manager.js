@@ -52,6 +52,11 @@ export const INITIAL_STORAGE_SCHEMA = {
     spActiveView: 'search',
     spTileOrder: null, // null = 기본 순서. 배열이면 사용자가 드래그로 지정한 순서
 
+    // 유저 규칙 추가 폼의 기본 대상. `uid` 는 고닉·반고닉을 개인 단위로 집으므로
+    // 오차단이 없다. `nick` 은 `ㅇㅇ` 처럼 겹치는 닉네임에 여러 명이 함께 걸린다.
+    // 사용자가 폼에서 대상을 바꾸면 그 선택이 다음 기본값으로 기억된다.
+    defaultUserRuleType: 'uid',
+
     // 자짤(자동 첨부) 다중 이미지
     autoSigMode: 'random', // 'random' | 'single' | 'gallery'
     autoSigSelectedId: null,

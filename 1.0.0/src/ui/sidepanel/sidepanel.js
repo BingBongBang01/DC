@@ -1,5 +1,6 @@
 import { themeSystem } from '../theme/theme-system.js';
 import { configManager } from '../../core/config-manager.js';
+import { logger } from '../../core/logger.js';
 import { storageManager } from '../../core/storage-manager.js';
 import { eventBus } from '../../core/event-bus.js';
 import { messageRouter } from '../../core/message-router.js';
@@ -1228,10 +1229,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const userRuleForm = document.getElementById('sp-user-rule-form');
 
+  // 규칙 대상의 기본값은 설정에 저장된 사용자 선택을 따른다 (기본 `uid` — 개인 단위라
+  // 오차단이 없다). 폼에서 대상을 바꾸면 그 선택이 다음 기본값으로 기억된다.
+  const userRuleTypeSelect = document.getElementById('sp-user-rule-type');
+
+  function applyDefaultUserRuleType() {
+    if (!userRuleTypeSelect) return;
+    const preferred = configManager.get('defaultUserRuleType') || 'uid';
+    const options = Array.from(userRuleTypeSelect.options).map(option => option.value);
+    userRuleTypeSelect.value = options.includes(preferred) ? preferred : 'uid';
+  }
+
+  applyDefaultUserRuleType();
+
+  userRuleTypeSelect?.addEventListener('change', () => {
+    configManager.set('defaultUserRuleType', userRuleTypeSelect.value)
+      .catch(err => logger.debug('sidepanel: failed to remember rule type:', err));
+  });
+
   document.getElementById('sp-btn-add-user-rule')?.addEventListener('click', () => {
     userRuleForm?.classList.toggle('hidden');
     setStatus('sp-user-rule-status', '');
     if (!userRuleForm?.classList.contains('hidden')) {
+      applyDefaultUserRuleType();
       document.getElementById('sp-user-rule-value')?.focus();
     }
   });
@@ -1267,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let nickReachTimer = null;
   const updateNickReachHint = () => {
-    const type = document.getElementById('sp-user-rule-type')?.value || 'nick';
+    const type = document.getElementById('sp-user-rule-type')?.value || 'uid';
     const value = document.getElementById('sp-user-rule-value')?.value.trim() || '';
     if (type !== 'nick' || !value) {
       setStatus('sp-user-rule-status', '');
@@ -1298,7 +1318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const type = document.getElementById('sp-user-rule-type')?.value || 'nick';
+    const type = document.getElementById('sp-user-rule-type')?.value || 'uid';
 
     // 닉네임 규칙은 사정거리를 확인받고 나서 만든다.
     if (type === 'nick') {

@@ -19,7 +19,8 @@ import {
   readWriterIdentity
 } from '../src/core/identity.js';
 import { userNotesFeature } from '../src/features/user-notes-feature.js';
-import { storageManager } from '../src/core/storage-manager.js';
+import { storageManager, INITIAL_STORAGE_SCHEMA } from '../src/core/storage-manager.js';
+import { configManager } from '../src/core/config-manager.js';
 import { nicknameHolders, ipBand } from '../src/core/archive/activity-analyzer.js';
 import { userRuleManager } from '../src/core/filters/user-rule-manager.js';
 
@@ -309,6 +310,31 @@ export async function runIdentityTests() {
   assert.strictEqual('175.223'.startsWith(`${band}.`), false, '옛 접두 비교가 실패하는 이유');
   assert.strictEqual(ipBand('175.223') === band, true, '대역끼리 비교하면 매칭됨');
   console.log('✅ [Identity] 2옥텟 IP 에서도 같은 대역이 매칭됨');
+
+  // 9. 유저 규칙 추가 폼의 기본 대상
+  // 기본값이 `nick` 이면 `ㅇㅇ` 같은 닉네임에 무심코 규칙을 걸어 여러 명이 함께 차단된다.
+  // 개인 단위인 `uid` 를 기본으로 두고, 사용자가 고른 값을 기억한다.
+  assert.strictEqual(
+    INITIAL_STORAGE_SCHEMA.settings.defaultUserRuleType,
+    'uid',
+    '기본 대상은 개인 단위인 uid'
+  );
+
+  await configManager.init();
+  assert.strictEqual(configManager.get('defaultUserRuleType'), 'uid');
+
+  await configManager.set('defaultUserRuleType', 'nick');
+  assert.strictEqual(configManager.get('defaultUserRuleType'), 'nick', '사용자가 고른 대상이 기억됨');
+  await configManager.set('defaultUserRuleType', 'uid');
+
+  // 설정을 못 읽는 상황에서도 브라우저가 고르는 첫 옵션이 안전해야 한다.
+  const panel = new JSDOM(fs.readFileSync(
+    path.join(process.cwd(), 'src', 'ui', 'sidepanel', 'sidepanel.html'), 'utf-8'
+  )).window.document;
+  const typeOptions = Array.from(panel.querySelectorAll('#sp-user-rule-type option')).map(o => o.value);
+  assert.strictEqual(typeOptions[0], 'uid', '마크업의 첫 옵션도 uid 여야 함');
+  assert.ok(typeOptions.includes('nick') && typeOptions.includes('ip'), '다른 대상도 선택할 수 있음');
+  console.log('✅ [Identity] 규칙 추가 폼의 기본 대상이 uid 이고 사용자 선택을 기억함');
 
   console.log('--- Identity Tests Passed ---');
 }
