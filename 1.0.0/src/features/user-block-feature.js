@@ -18,6 +18,7 @@ import {
   USER_RULE_ACTIONS,
   USER_RULE_TYPES
 } from '../core/filters/user-rule-manager.js';
+import { readWriterIdentity } from '../core/identity.js';
 
 const PROCESSED_ATTR = 'data-dcu-user-checked';
 
@@ -76,12 +77,8 @@ export class UserBlockFeature extends BaseFeature {
       const writer = container.querySelector('.gall_writer, .ub-writer');
       if (!writer) return;
 
-      const user = {
-        nick: writer.getAttribute('data-nick') || '',
-        uid: writer.getAttribute('data-uid') || '',
-        ip: writer.getAttribute('data-ip') || ''
-      };
-      if (!user.nick && !user.uid && !user.ip) return;
+      const user = readWriterIdentity(writer);
+      if (!user || (!user.nick && !user.uid && !user.ip)) return;
 
       const rule = findMatchingRule(this.rules, user, this.galleryId);
       if (!rule) return;

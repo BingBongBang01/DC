@@ -130,9 +130,16 @@ export class AutoLoginService {
     const now = Date.now();
 
     if (session.suppressedTabs[key] !== undefined) {
-      // 디시 밖에서(또는 새 창/새 탭으로) 다시 들어온 경우는 "새로 들어온 것"이므로
-      // 로그아웃 유지 상태를 풀어 준다. 탭 URL 추적(tabs 권한)에 의존하지 않는 판단이다.
-      const cameFromOutside = !referrer || !isDcInsideUrl(referrer);
+      // 디시 밖에서 다시 들어온 경우만 "새로 들어온 것"으로 보고 로그아웃 유지를 풀어 준다.
+      //
+      // referrer 가 **있고** 그것이 디시가 아닐 때만 재무장한다. referrer 는 주소창 직접
+      // 입력, `rel=noreferrer` 링크, 일부 새로고침에서 빈 값으로 오는데, 빈 값을 "밖에서
+      // 왔다"로 읽으면 사용자가 일부러 로그아웃한 직후의 평범한 이동에도 자동 로그인이
+      // 되살아난다. 확실하지 않을 때는 사용자의 결정(로그아웃)을 유지하는 쪽이 안전하다.
+      //
+      // 탭이 실제로 디시를 벗어나거나 닫히는 경우는 `chrome.tabs` 리스너가 `releaseTab()`
+      // 으로 확실하게 처리하므로(background/index.js), 여기서 추측할 필요가 없다.
+      const cameFromOutside = Boolean(referrer) && !isDcInsideUrl(referrer);
       if (!cameFromOutside) {
         return { action: 'none', reason: 'user_logged_out' };
       }

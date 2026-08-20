@@ -18,7 +18,7 @@ import { userRuleManager } from '../core/filters/user-rule-manager.js';
 import { draftStore } from '../core/draft/draft-store.js';
 import { dcconStore } from '../core/dccon/dccon-store.js';
 import { archiveDB, ArchiveDB } from '../core/archive/archive-db.js';
-import { summarizeUserActivity, galleryShareStats, suspiciousIpBands } from '../core/archive/activity-analyzer.js';
+import { summarizeUserActivity, galleryShareStats, suspiciousIpBands, nicknameHolders, ipBand } from '../core/archive/activity-analyzer.js';
 import { isDCInsideUrl } from '../core/site-detector.js';
 
 logger.info('Service Worker: Starting DC Ultimate background process...');
@@ -424,13 +424,21 @@ function registerMessageHandlers() {
     const share = stats.entries.find(entry => entry.authorKey === authorKey) || { share: 0, count: 0 };
 
     // 같은 IP 대역에서 관측된 다른 닉네임 (통피/다중 계정 신호)
-    const ip = summary.ips[0] || '';
-    const band = ip ? ip.split('.').slice(0, 2).join('.') : '';
+    // 대역끼리 비교해야 한다. 디시가 유동닉 IP 를 2옥텟까지만 공개하므로 예전의
+    // `startsWith(`${band}.`)` 는 `175.223` 이 `175.223.` 으로 시작하지 않아 늘 빈 배열이었다.
+    const band = ipBand(summary.ips[0] || '');
     const sameIpNicknames = band
-      ? Array.from(new Set(recent.filter(post => (post.ip || '').startsWith(`${band}.`)).map(post => post.author).filter(Boolean)))
+      ? Array.from(new Set(recent.filter(post => post.ip && ipBand(post.ip) === band).map(post => post.author).filter(Boolean)))
       : [];
 
     return { summary, share: { ...share, sampled: stats.sampled }, sameIpNicknames };
+  });
+
+  messageRouter.register(MessageAction.ARCHIVE_NICK_HOLDERS, async (payload) => {
+    await ensureReady();
+    const { galleryId, nickname } = payload || {};
+    const records = await archiveDB.nicknameActivity(galleryId, nickname);
+    return nicknameHolders(records, nickname);
   });
 
   messageRouter.register(MessageAction.ARCHIVE_GALLERY_STATS, async (payload) => {

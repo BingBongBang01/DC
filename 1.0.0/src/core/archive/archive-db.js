@@ -12,6 +12,7 @@
  *   comments — 본문 페이지에서 수집한 댓글   (key: `${galleryId}:${postId}:${commentId}`)
  */
 import { logger } from '../logger.js';
+import { userKeyOf } from '../identity.js';
 
 const DB_NAME = 'dc_ultimate_archive';
 const DB_VERSION = 1;
@@ -105,14 +106,14 @@ export class ArchiveDB {
   }
 
   /**
-   * 작성자를 하나의 키로 정규화 (고닉은 uid, 유동은 IP).
+   * 작성자를 하나의 키로 정규화 (고닉·반고닉은 uid, 유동닉은 IP).
+   *
+   * 반고닉도 uid 를 가지므로 닉네임이 `ㅇㅇ`처럼 겹쳐도 개인별로 갈라진다.
    * @param {{authorId?: string, ip?: string, author?: string}} item
    * @returns {string}
    */
   static authorKeyOf(item = {}) {
-    if (item.authorId) return `uid:${item.authorId}`;
-    if (item.ip) return `ip:${item.ip}`;
-    return `nick:${item.author || ''}`;
+    return userKeyOf({ uid: item.authorId, ip: item.ip, nick: item.author });
   }
 
   /**
@@ -274,6 +275,35 @@ export class ArchiveDB {
 
     const [posts, comments] = await Promise.all([read(STORE_POSTS), read(STORE_COMMENTS)]);
     return { posts, comments };
+  }
+
+  /**
+   * 한 갤러리에서 특정 닉네임으로 관측된 글·댓글.
+   *
+   * `nick` 규칙이 실제로 몇 명에게 걸리는지 세기 위한 조회다 (`nicknameHolders`).
+   * 닉네임 자체는 인덱스가 아니므로 갤러리 인덱스로 읽고 메모리에서 걸러낸다 —
+   * `recentPosts()` 와 같은 방식이다.
+   *
+   * @param {string} galleryId
+   * @param {string} nickname
+   * @returns {Promise<Array<Object>>}
+   */
+  async nicknameActivity(galleryId, nickname) {
+    const want = String(nickname || '').trim();
+    if (!galleryId || !want) return [];
+
+    const db = await this.open();
+    if (!db) return [];
+
+    const read = (storeName) => new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const request = tx.objectStore(storeName).index('galleryId').getAll(galleryId);
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+
+    const [posts, comments] = await Promise.all([read(STORE_POSTS), read(STORE_COMMENTS)]);
+    return [...posts, ...comments].filter(row => String(row.author || '').trim() === want);
   }
 
   /**

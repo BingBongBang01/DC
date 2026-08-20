@@ -172,7 +172,29 @@ export async function runAutoLoginTests() {
   await service.releaseTab(tabId);
   const revisited = await service.evaluate({ tabId, state: 'logged_out', isLoginPage: false });
   assert.strictEqual(revisited.action, 'navigate', 'returning to DC re-arms auto login');
-  console.log('✅ [AutoLogin] Manual logout sticks per tab and re-arms on a fresh visit');
+
+  // Re-arming needs positive evidence that the tab came from outside DCInside.
+  // An empty referrer (address bar, rel=noreferrer, some reloads) is not evidence:
+  // reading it as "came from outside" would undo a deliberate logout on the very
+  // next navigation. When unsure, the user's logout wins.
+  await service.suppressTab(tabId);
+  const insideDc = await service.evaluate({
+    tabId, state: 'logged_out', isLoginPage: false,
+    referrer: 'https://gall.dcinside.com/board/lists/?id=programming'
+  });
+  assert.strictEqual(insideDc.reason, 'user_logged_out', 'navigating within DC keeps the logout');
+  assert.ok(await service.isTabSuppressed(tabId), 'the tab stays suppressed');
+
+  const noReferrer = await service.evaluate({ tabId, state: 'logged_out', isLoginPage: false });
+  assert.strictEqual(noReferrer.reason, 'user_logged_out', 'an empty referrer must not re-arm');
+  assert.ok(await service.isTabSuppressed(tabId));
+
+  const fromOutside = await service.evaluate({
+    tabId, state: 'logged_out', isLoginPage: false, referrer: 'https://www.google.com/'
+  });
+  assert.strictEqual(fromOutside.action, 'navigate', 'arriving from outside DC re-arms auto login');
+  assert.ok(!(await service.isTabSuppressed(tabId)), 'suppression is cleared once re-armed');
+  console.log('✅ [AutoLogin] Manual logout sticks per tab and re-arms only on evidence of a fresh visit');
 
   // 9. Blocking states stop everything
   await service.blockForCaptcha();

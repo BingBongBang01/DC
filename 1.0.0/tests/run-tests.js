@@ -25,6 +25,7 @@ import { runPhase22Tests } from './phase22.test.js';
 import { runPageLayoutTests } from './page-layout.test.js';
 import { runServiceTilesTests } from './service-tiles.test.js';
 import { runArticleViewTests } from './article-view.test.js';
+import { runIdentityTests } from './identity.test.js';
 
 async function main() {
   console.log('===========================================================');
@@ -77,6 +78,8 @@ async function main() {
     await runServiceTilesTests();
     console.log('');
     await runArticleViewTests();
+    console.log('');
+    await runIdentityTests();
 
     console.log('\n===========================================================');
     console.log('  🎉 ALL TESTS PASSED SUCCESSFULLY!');

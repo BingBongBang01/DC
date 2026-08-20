@@ -6,10 +6,16 @@
  * spot.
  *
  * Identity shapes on DCInside (all read from `.gall_writer`):
- *   - 고닉 (fixed nickname): data-uid is set  → match by `uid`
- *   - 유동/통피 (anonymous):  data-ip is set   → match by `ip` or `ipPrefix`
+ *   - 고닉 (fixed nickname):      data-uid is set → match by `uid`
+ *   - 반고닉 (semi-fixed):        data-uid is set → match by `uid`
+ *   - 유동/통피 (anonymous):      data-ip is set  → match by `ip` or `ipPrefix`
  *   - nickname text is never unique on its own, so `nick` rules exist but are
  *     documented as weaker in the UI.
+ *
+ * 고닉과 반고닉은 둘 다 uid 를 가지며, 닉 아이콘(`fix_nik.gif` vs `nik.gif`)으로만
+ * 갈린다 — `core/identity.js` 의 `classifyIdentity()` 참고. 규칙 매칭에는 차이가 없다:
+ * 반고닉이 `ㅇㅇ`처럼 겹치는 닉네임을 써도 uid 규칙은 개인 단위로 정확히 걸린다.
+ * 반대로 `nick` 규칙을 `ㅇㅇ` 에 걸면 무관한 여러 명이 함께 걸린다.
  */
 import { storageManager } from '../storage-manager.js';
 import { logger } from '../logger.js';
@@ -38,9 +44,12 @@ export const USER_RULE_ACTIONS = {
  * @property {string} value
  * @property {'blind'|'hide'|'dim'|'label'} action
  * @property {string} memo 식별용 메모 (라벨로 표시)
+ * @property {string} [label] 표시용: 마지막으로 관측된 닉네임
+ * @property {string} [identity] 표시용: 신분 (`core/identity.js` 의 USER_IDENTITY)
  * @property {string|null} galleryId null이면 전체 갤러리
  * @property {boolean} enabled
  * @property {number} createdAt
+ * @property {number} [updatedAt]
  * @property {number} hitCount
  */
 
@@ -172,9 +181,12 @@ export class UserRuleManager {
     const rules = await this.load(true);
     const duplicate = rules.find(r => r.type === type && r.value === value && (r.galleryId || null) === (data.galleryId || null));
     if (duplicate) {
+      // 넘어오지 않은 표시 정보는 기존 값을 지우지 않는다.
       return this.updateRule(duplicate.id, {
         action: data.action || duplicate.action,
-        memo: data.memo !== undefined ? data.memo : duplicate.memo
+        memo: data.memo !== undefined ? data.memo : duplicate.memo,
+        label: data.label !== undefined ? String(data.label) : duplicate.label,
+        identity: data.identity !== undefined ? data.identity : duplicate.identity
       });
     }
 
@@ -184,9 +196,14 @@ export class UserRuleManager {
       value,
       action: Object.values(USER_RULE_ACTIONS).includes(data.action) ? data.action : USER_RULE_ACTIONS.BLIND,
       memo: String(data.memo || '').slice(0, 200),
+      // 표시용: 마지막으로 관측된 닉네임과 신분. `uid:guest1433` 만으로는 누구인지
+      // 알 수 없어서 목록에 함께 보여준다.
+      label: String(data.label || ''),
+      identity: data.identity || '',
       galleryId: data.galleryId || null,
       enabled: data.enabled !== false,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
       hitCount: 0
     };
 
@@ -201,7 +218,7 @@ export class UserRuleManager {
     const index = rules.findIndex(r => r.id === id);
     if (index === -1) throw new Error('규칙을 찾을 수 없습니다.');
 
-    rules[index] = { ...rules[index], ...updates, id: rules[index].id };
+    rules[index] = { ...rules[index], ...updates, id: rules[index].id, updatedAt: Date.now() };
     await this.save(rules);
     return rules[index];
   }

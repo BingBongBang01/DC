@@ -1,5 +1,5 @@
 import { themeSystem } from '../theme/theme-system.js';
-import { Logger } from '../../core/logger.js';
+import { Logger, logger } from '../../core/logger.js';
 import { configManager } from '../../core/config-manager.js';
 import { storageManager, INITIAL_STORAGE_SCHEMA } from '../../core/storage-manager.js';
 import { filterEngine, FilterRuleItem, FILTER_ACTIONS } from '../../core/filters/filter-engine.js';
@@ -7,6 +7,7 @@ import { userNotesFeature } from '../../features/user-notes-feature.js';
 import { dataManager } from '../../core/data-manager.js';
 import { createSwitch, createSnackbar } from '../components/ui-components.js';
 import { escapeHTML } from '../../utils/sanitizer.js';
+import { normalizeUserKey, isAmbiguousKey, parseUserKey } from '../../core/identity.js';
 import { messageRouter } from '../../core/message-router.js';
 import { signatureStore } from '../../core/signature/signature-store.js';
 import { MessageAction } from '../../core/message-contract.js';
@@ -319,9 +320,15 @@ function applyTranslations() {
       card.className = 'rule-card';
       const safeKey = escapeHTML(key);
       const safeNote = escapeHTML(noteObj.note);
+      // `uid:guest1433` 만 보이면 누구인지 알 수 없으므로 닉네임·신분을 함께 보여준다.
+      const safeLabel = escapeHTML(userNotesFeature.describeKey(key, noteObj));
+      // 메모가 유저 규칙과 같은 저장소를 쓰므로, 페이지에서 실제로 어떻게 처리되는지 밝힌다.
+      const safeAction = escapeHTML(userNotesFeature.describeAction(noteObj));
       card.innerHTML = `
         <div>
-          <b>${safeKey}</b>: ${safeNote} ${noteObj.isBlocked ? t('user_blocked') : ''}
+          <b>${safeLabel}</b>: ${safeNote}
+          <span style="font-size:11px; color:#64748b;">— ${safeAction}</span>
+          ${noteObj.isBlocked ? t('user_blocked') : ''}
         </div>
         <button class="md3-button md3-button--danger btn-del-note" style="height: 32px; padding: 0 12px;" data-key="${safeKey}">${t('common_delete')}</button>
       `;
@@ -338,15 +345,38 @@ function applyTranslations() {
     });
   };
 
+  // 예전 `userNotes` 저장소에 남은 메모가 있으면 목록을 그리기 전에 유저 규칙으로 흡수한다.
+  try {
+    await userNotesFeature.migrateFromLegacyNotes();
+  } catch (err) {
+    logger.debug('options: legacy note merge skipped:', err);
+  }
   await renderUserNotes();
 
   // Save User Note Button
   document.getElementById('btn-save-usernote')?.addEventListener('click', async () => {
-    const key = document.getElementById('un-key').value.trim();
+    const raw = document.getElementById('un-key').value.trim();
     const note = document.getElementById('un-note').value.trim();
-    if (!key || !note) {
+    if (!raw || !note) {
       alert(t('msg_un_req'));
       return;
+    }
+
+    // 입력을 `uid:`/`ip:`/`nick:` 키로 정규화한다. 접두가 없으면 IP 모양은 ip, 나머지는 nick.
+    const key = normalizeUserKey(raw);
+    if (!key) {
+      // `uid:` 처럼 접두만 넣은 경우 — 저장하지 않고 되돌린다.
+      alert(t('msg_un_req'));
+      return;
+    }
+    if (isAmbiguousKey(key)) {
+      const { type, value } = parseUserKey(key);
+      const reason = type === 'ip'
+        ? `IP ${value}는 2옥텟까지만 공개되어 같은 대역의 다른 사람에게도 이 메모가 붙습니다.`
+        : `닉네임 "${value}"은 여러 사람이 함께 쓸 수 있어 이 메모가 특정 개인을 가리키지 않습니다.`;
+      if (!confirm(`${reason}\n\n개인 단위로 메모하려면 계정 아이디를 "uid:아이디" 형식으로 입력하세요.\n그대로 저장할까요?`)) {
+        return;
+      }
     }
 
     await userNotesFeature.setNote(key, note);

@@ -228,10 +228,10 @@
     "message": "유저 노트 추가"
   },
   "user_id": {
-    "message": "유저 식별자 (ID/IP/닉네임)"
+    "message": "유저 식별자 (uid:아이디 · ip:IP · 닉네임)"
   },
   "user_id_ph": {
-    "message": "식별자"
+    "message": "uid:guest1433"
   },
   "user_note": {
     "message": "노트 내용"
