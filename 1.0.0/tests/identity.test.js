@@ -21,6 +21,7 @@ import {
 import { userNotesFeature } from '../src/features/user-notes-feature.js';
 import { storageManager } from '../src/core/storage-manager.js';
 import { nicknameHolders, ipBand } from '../src/core/archive/activity-analyzer.js';
+import { userRuleManager } from '../src/core/filters/user-rule-manager.js';
 
 const FIXTURES = path.join(process.cwd(), 'tests', 'fixtures');
 const readFixture = (name) => fs.readFileSync(path.join(FIXTURES, name), 'utf-8');
@@ -123,7 +124,8 @@ export async function runIdentityTests() {
   assert.ok(floatingOo.every(w => isAmbiguousKey(w.key)), '유동닉 키는 약한 키로 표시됨');
   console.log('✅ [Identity] 닉네임 ㅇㅇ 10건 중 반고닉 3명이 uid 로 개별 식별됨');
 
-  // 5. 유저 메모 — 정규화 키로 저장/조회
+  // 5. 유저 메모 — 유저 규칙 저장소 하나에 정규화 키로 저장/조회
+  await userRuleManager.save([]);
   await storageManager.set({ userNotes: {} });
 
   await userNotesFeature.setNoteFor(
@@ -164,7 +166,52 @@ export async function runIdentityTests() {
   assert.deepStrictEqual(Object.keys(await userNotesFeature.getAllNotes()), ['uid:table9132']);
   console.log('✅ [Identity] 유저 메모가 정규화 키로 저장되어 반고닉끼리 섞이지 않음');
 
-  // 6. 예전 자유 입력 키 마이그레이션
+  // 5b. 메모는 유저 규칙과 같은 저장소를 쓴다 — 설정 화면 메모가 페이지에도 뜬다
+  const asRules = await userRuleManager.load(true);
+  assert.strictEqual(asRules.length, 1, '메모 1건이 규칙 1건으로 저장됨');
+  assert.strictEqual(asRules[0].type, 'uid');
+  assert.strictEqual(asRules[0].value, 'table9132');
+  assert.strictEqual(asRules[0].action, 'label', '차단이 아닌 메모는 label 액션');
+  assert.strictEqual(asRules[0].memo, '질문 잘 받아줌');
+
+  // 반대 방향: 다른 화면(팝오버/사이드패널)에서 만든 규칙도 메모 목록에 보인다
+  await userRuleManager.addRule({
+    type: 'uid', value: 'chartman', action: 'blind', memo: '사이드패널에서 차단'
+  });
+  const merged = await userNotesFeature.getAllNotes();
+  assert.deepStrictEqual(Object.keys(merged).sort(), ['uid:chartman', 'uid:table9132']);
+  assert.strictEqual(merged['uid:chartman'].isBlocked, true);
+  assert.strictEqual(merged['uid:chartman'].note, '사이드패널에서 차단');
+
+  // 메모만 고칠 때 이미 걸린 차단을 강등하지 않는다
+  await userNotesFeature.setNote('uid:chartman', '메모만 수정');
+  const afterEdit = await userNotesFeature.getNote('uid:chartman');
+  assert.strictEqual(afterEdit.note, '메모만 수정');
+  assert.strictEqual(afterEdit.action, 'blind', '메모 수정이 차단을 풀지 않음');
+  assert.strictEqual(afterEdit.isBlocked, true);
+
+  // 명시적으로 차단을 걸면 올라간다
+  await userNotesFeature.setNote('uid:table9132', '이제 차단', true);
+  assert.strictEqual((await userNotesFeature.getNote('uid:table9132')).action, 'blind');
+
+  assert.strictEqual(userNotesFeature.describeAction({ action: 'label' }), '메모만');
+  assert.strictEqual(
+    userNotesFeature.describeAction({ action: 'blind', galleryId: 'programming' }),
+    '차단(펼치기 가능) · programming 갤러리'
+  );
+
+  // ipPrefix/regex 규칙은 식별자 키로 표현되지 않으므로 메모 뷰에 나오지 않는다
+  await userRuleManager.addRule({ type: 'ipPrefix', value: '223.39', action: 'dim', memo: '대역' });
+  await userRuleManager.addRule({ type: 'regex', value: '^분탕', action: 'dim', memo: '정규식' });
+  assert.deepStrictEqual(
+    Object.keys(await userNotesFeature.getAllNotes()).sort(),
+    ['uid:chartman', 'uid:table9132'],
+    'ipPrefix/regex 는 메모 목록에서 제외'
+  );
+  console.log('✅ [Identity] 메모와 유저 규칙이 하나의 저장소를 공유함');
+
+  // 6. 예전 `userNotes` 저장소 드레인
+  await userRuleManager.save([]);
   await storageManager.set({
     userNotes: {
       // 접두 없는 옛 키들
@@ -175,22 +222,34 @@ export async function runIdentityTests() {
     }
   });
 
-  const moved = await userNotesFeature.migrateLegacyKeys();
-  assert.strictEqual(moved, 2, '접두 없는 키 2건이 이동');
+  const moved = await userNotesFeature.migrateFromLegacyNotes();
+  assert.strictEqual(moved, 3, '옛 메모 3건을 흡수');
 
   const migrated = await userNotesFeature.getAllNotes();
   assert.deepStrictEqual(Object.keys(migrated).sort(), ['ip:175.223', 'nick:ㅇㅇ']);
   assert.strictEqual(migrated['nick:ㅇㅇ'].note, '최신 메모', '합쳐질 때 updatedAt 이 늦은 쪽이 남음');
   assert.strictEqual(migrated['ip:175.223'].isBlocked, true, '차단 상태가 보존됨');
-  assert.strictEqual(migrated['nick:ㅇㅇ'].label, 'ㅇㅇ', '옛 닉네임 키는 표시용 라벨로 백필됨');
-  assert.strictEqual(migrated['ip:175.223'].label, '', 'IP 키는 라벨이 비어 있음');
+  assert.strictEqual(migrated['ip:175.223'].action, 'blind');
 
-  // 두 번째 호출은 아무것도 옮기지 않는다 (멱등)
-  assert.strictEqual(await userNotesFeature.migrateLegacyKeys(), 0);
-  assert.deepStrictEqual(await userNotesFeature.getAllNotes(), migrated, '멱등 호출이 데이터를 바꾸지 않음');
+  // 옛 저장소는 비워진다
+  assert.deepStrictEqual((await storageManager.get('userNotes')).userNotes, {}, '드레인 후 옛 저장소는 빈다');
 
+  // 비어 있으면 아무것도 하지 않는다
+  assert.strictEqual(await userNotesFeature.migrateFromLegacyNotes(), 0);
+  assert.deepStrictEqual(await userNotesFeature.getAllNotes(), migrated, '재호출이 데이터를 바꾸지 않음');
+
+  // 백업 복원으로 옛 메모가 되살아나도 다시 흡수한다 (한 번만 도는 마이그레이션이 아니다)
+  await storageManager.set({
+    userNotes: {
+      'nick:ㅇㅇ': { userKey: 'nick:ㅇㅇ', note: '복원된 메모', isBlocked: false, updatedAt: '2026-06-06T00:00:00.000Z' }
+    }
+  });
+  assert.strictEqual(await userNotesFeature.migrateFromLegacyNotes(), 1, '복원된 메모를 다시 흡수');
+  assert.strictEqual((await userNotesFeature.getNote('nick:ㅇㅇ')).note, '복원된 메모');
+
+  await userRuleManager.save([]);
   await storageManager.set({ userNotes: {} });
-  console.log('✅ [Identity] 옛 자유 입력 키가 정규화 키로 한 번만 이동함');
+  console.log('✅ [Identity] 옛 메모 저장소가 규칙으로 흡수되고 복원 시에도 다시 흡수됨');
 
   // 7. 닉네임 규칙의 사정거리 — 픽스처의 ㅇㅇ 10명을 아카이브 레코드 모양으로 옮겨 센다
   const records = writers

@@ -80,6 +80,8 @@ export const INITIAL_STORAGE_SCHEMA = {
   filters: {
     rules: []
   },
+  // 예전 유저 메모 저장소. 메모의 정본은 `dc_user_rules` 로 옮겨졌고, 여기 남은 값은
+  // `UserNotesFeature.migrateFromLegacyNotes()` 가 흡수한 뒤 비운다 (백업 복원 대비).
   userNotes: {},
   bookmarks: [],
   searchProfiles: [],

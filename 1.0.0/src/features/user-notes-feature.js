@@ -1,23 +1,41 @@
 /**
- * UserNotesFeature Module for DC Ultimate (Phase 4B)
- * Local user notes, local user blocks, and activity summary tracker
+ * UserNotesFeature — 유저 메모 (유저 규칙 저장소 위의 뷰)
  *
- * 메모는 `uid:guest1433` 같은 **정규화 키**로 저장한다. 예전에는 사람이 설정 화면에
- * 자유 입력한 문자열이 그대로 키였는데, 그러면 `ㅇㅇ` 한 건이 서로 무관한 반고닉 여럿과
- * 유동닉 여럿을 동시에 가리켜 메모가 의미를 잃었다 (`SEMI_FIXED_NICKNAME_ANALYSIS.md`).
- * 기존 키는 `migrateLegacyKeys()` 가 한 번 정규화해서 옮긴다.
+ * 예전에는 메모가 두 갈래였다. `userNotes` 저장소(설정 화면 전용, 페이지에는 안 보임)와
+ * `UserRuleManager` 의 `label` 규칙(페이지에 메모 라벨을 실제로 그림)이 각각 따로 있어서,
+ * 같은 사람에게 붙인 메모가 어디에 저장됐는지에 따라 보이기도 하고 안 보이기도 했다.
+ *
+ * 이제 정본은 **유저 규칙 하나**다. 이 클래스는 그 위에 "식별자 → 메모" 모양의 얇은 뷰를
+ * 얹은 것이고, 저장은 전부 `dc_user_rules` 로 간다. 그래서 설정 화면에서 남긴 메모도
+ * 페이지에 라벨로 뜬다.
+ *
+ * 다루는 규칙은 신분으로 사람을 가리키는 세 종류(`uid`/`ip`/`nick`)뿐이다.
+ * `ipPrefix`·`regex` 규칙은 식별자 키로 표현되지 않으므로 이 뷰에 나오지 않는다
+ * (사이드패널의 규칙 목록에서 다룬다).
+ *
+ * 근거와 배경은 `SEMI_FIXED_NICKNAME_ANALYSIS.md`.
  */
 import { BaseFeature } from './base-feature.js';
 import { storageManager } from '../core/storage-manager.js';
 import { logger } from '../core/logger.js';
 import {
+  userRuleManager,
+  USER_RULE_TYPES,
+  USER_RULE_ACTIONS
+} from '../core/filters/user-rule-manager.js';
+import {
   normalizeUserKey,
   userKeyOf,
   identityLabel,
   parseUserKey,
-  USER_IDENTITY,
-  USER_KEY_TYPES
+  USER_IDENTITY
 } from '../core/identity.js';
+
+/** 메모 뷰가 다루는 규칙 종류 — 식별자로 사람을 가리키는 것만. */
+const NOTE_RULE_TYPES = [USER_RULE_TYPES.UID, USER_RULE_TYPES.IP, USER_RULE_TYPES.NICK];
+
+/** 예전 메모가 담겨 있던 저장소 키. 지금은 드레인 대상이다. */
+export const LEGACY_NOTES_KEY = 'userNotes';
 
 export class UserNotesFeature extends BaseFeature {
   constructor() {
@@ -25,46 +43,118 @@ export class UserNotesFeature extends BaseFeature {
   }
 
   async onEnable() {
-    // 예전 자유 입력 키가 남아 있으면 이 시점에 한 번 정규화한다.
     try {
-      const moved = await this.migrateLegacyKeys();
-      if (moved > 0) logger.info(`UserNotesFeature: migrated ${moved} legacy note key(s)`);
+      const moved = await this.migrateFromLegacyNotes();
+      if (moved > 0) logger.info(`UserNotesFeature: merged ${moved} legacy note(s) into user rules`);
     } catch (err) {
-      logger.debug('UserNotesFeature: key migration skipped:', err);
+      logger.debug('UserNotesFeature: legacy note merge skipped:', err);
     }
     logger.info('UserNotesFeature enabled.');
   }
 
   /**
+   * 규칙 하나를 메모 모양으로 투영한다.
+   * @param {Object} rule
+   */
+  _toNote(rule) {
+    return {
+      userKey: `${rule.type}:${rule.value}`,
+      note: rule.memo || '',
+      // `label` 액션은 순수 메모, 나머지(blind/hide/dim)는 뭔가 가리고 있다는 뜻이다.
+      isBlocked: rule.action !== USER_RULE_ACTIONS.LABEL,
+      action: rule.action,
+      label: rule.label || '',
+      identity: rule.identity || USER_IDENTITY.UNKNOWN,
+      galleryId: rule.galleryId || null,
+      updatedAt: new Date(rule.updatedAt || rule.createdAt || 0).toISOString(),
+      ruleId: rule.id
+    };
+  }
+
+  /**
+   * Get all stored user notes — 식별자 키 → 메모.
+   *
+   * 같은 식별자에 전체 규칙과 갤러리 한정 규칙이 함께 있으면 전체 규칙을 대표로 쓰고,
+   * 둘 다 갤러리 한정이면 최근에 고친 쪽을 쓴다 (뷰의 키는 갤러리를 구분하지 않는다).
+   */
+  async getAllNotes() {
+    const rules = await userRuleManager.load(true);
+    const map = {};
+
+    for (const rule of rules) {
+      if (!rule || !NOTE_RULE_TYPES.includes(rule.type) || !rule.value) continue;
+
+      const note = this._toNote(rule);
+      const existing = map[note.userKey];
+      if (!existing) {
+        map[note.userKey] = note;
+        continue;
+      }
+
+      if (existing.galleryId === null) continue;
+      if (note.galleryId === null || note.updatedAt > existing.updatedAt) {
+        map[note.userKey] = note;
+      }
+    }
+
+    return map;
+  }
+
+  /**
+   * Get note for user key
+   * @param {string} userKey `uid:guest1433` 또는 자유 입력 문자열
+   * @returns {Object|null}
+   */
+  async getNote(userKey) {
+    const key = normalizeUserKey(userKey);
+    if (!key) return null;
+    const notes = await this.getAllNotes();
+    return notes[key] || null;
+  }
+
+  /**
+   * 작성자 정보로 메모를 조회한다.
+   * @param {{nick?: string, uid?: string, ip?: string}} user
+   */
+  async getNoteFor(user) {
+    return this.getNote(userKeyOf(user || {}));
+  }
+
+  /**
    * Add or update note for a user key (nickname or IP or uid)
    *
-   * 키는 정규화해서 저장하므로 `guest1433` 과 `uid:guest1433` 은 같은 메모가 된다.
+   * 저장은 유저 규칙으로 간다. `isBlocked` 가 false 라도 이미 걸려 있는 차단을 메모로
+   * 강등하지는 않는다 — 메모만 고치려다 차단이 풀리면 안 되기 때문이다.
+   *
    * @param {string} userKey User key (자유 입력 문자열도 허용)
    * @param {string} note Content note
-   * @param {boolean} [isBlocked=false] Local block status
-   * @param {{label?: string, identity?: string}} [meta] 표시용 부가 정보
+   * @param {boolean} [isBlocked=false] 차단(블라인드)까지 걸 것인지
+   * @param {{label?: string, identity?: string, galleryId?: string|null}} [meta]
    */
   async setNote(userKey, note, isBlocked = false, meta = {}) {
     const key = normalizeUserKey(userKey);
-    if (!key) return;
+    if (!key) return null;
 
-    const data = await storageManager.get('userNotes');
-    const notesMap = data.userNotes || {};
-    const previous = notesMap[key] || {};
+    const { type, value } = parseUserKey(key);
+    if (!value || !NOTE_RULE_TYPES.includes(type)) return null;
 
-    notesMap[key] = {
-      userKey: key,
-      note,
-      isBlocked: Boolean(isBlocked),
-      // 목록에서 `uid:guest1433` 만 보이면 누구인지 알 수 없으므로 마지막으로 관측된
-      // 닉네임과 신분을 함께 남긴다.
-      label: meta.label !== undefined ? meta.label : (previous.label || ''),
-      identity: meta.identity || previous.identity || USER_IDENTITY.UNKNOWN,
-      updatedAt: new Date().toISOString()
-    };
+    const existing = (await this.getAllNotes())[key];
+    const action = isBlocked
+      ? USER_RULE_ACTIONS.BLIND
+      : (existing && existing.action !== USER_RULE_ACTIONS.LABEL ? existing.action : USER_RULE_ACTIONS.LABEL);
 
-    await storageManager.set({ userNotes: notesMap });
+    const rule = await userRuleManager.addRule({
+      type,
+      value,
+      memo: note,
+      action,
+      galleryId: meta.galleryId !== undefined ? meta.galleryId : (existing ? existing.galleryId : null),
+      label: meta.label,
+      identity: meta.identity
+    });
+
     logger.info(`UserNotesFeature: Updated note for ${key}`);
+    return this._toNote(rule);
   }
 
   /**
@@ -81,89 +171,52 @@ export class UserNotesFeature extends BaseFeature {
   }
 
   /**
-   * Get note for user key
-   * @param {string} userKey User key
-   * @returns {Object|null}
-   */
-  async getNote(userKey) {
-    const data = await storageManager.get('userNotes');
-    const notesMap = data.userNotes || {};
-    const key = normalizeUserKey(userKey);
-    // 아직 마이그레이션되지 않은 저장소에서도 찾히도록 원본 키까지 본다.
-    return notesMap[key] || notesMap[String(userKey || '').trim()] || null;
-  }
-
-  /**
-   * 작성자 정보로 메모를 조회한다.
-   * @param {{nick?: string, uid?: string, ip?: string}} user
-   */
-  async getNoteFor(user) {
-    return this.getNote(userKeyOf(user || {}));
-  }
-
-  /**
    * Delete note for user key
+   *
+   * 같은 식별자를 가리키는 규칙이 전체·갤러리 한정으로 여럿 있으면 모두 지운다 —
+   * 목록에서 지웠는데 행이 남아 있으면 안 되기 때문이다.
    * @param {string} userKey User key
    */
   async deleteNote(userKey) {
-    const data = await storageManager.get('userNotes');
-    const notesMap = data.userNotes || {};
-    const raw = String(userKey || '').trim();
-    const key = normalizeUserKey(raw);
+    const key = normalizeUserKey(userKey);
+    if (!key) return;
 
-    delete notesMap[key];
-    // 마이그레이션 전 데이터를 지우는 경우도 있으므로 원본 키도 함께 정리한다.
-    if (raw && raw !== key) delete notesMap[raw];
+    const { type, value } = parseUserKey(key);
+    if (!value || !NOTE_RULE_TYPES.includes(type)) return;
 
-    await storageManager.set({ userNotes: notesMap });
+    const rules = await userRuleManager.load(true);
+    const remaining = rules.filter(rule => !(rule.type === type && rule.value === value));
+    if (remaining.length !== rules.length) await userRuleManager.save(remaining);
   }
 
   /**
-   * Get all stored user notes
-   */
-  async getAllNotes() {
-    const data = await storageManager.get('userNotes');
-    return data.userNotes || {};
-  }
-
-  /**
-   * 예전 자유 입력 키를 정규화 키로 옮긴다.
+   * 예전 `userNotes` 저장소에 남은 메모를 유저 규칙으로 옮기고 저장소를 비운다.
    *
-   * 두 개의 옛 키가 같은 정규화 키로 합쳐지면 `updatedAt` 이 늦은 쪽을 남긴다.
-   * 이미 정규화된 저장소에서는 아무것도 쓰지 않는다.
+   * 한 번만 도는 마이그레이션이 아니라 **다시 돌 수 있는 드레인**이다: 백업 복원
+   * (`DataManager.importJSON`)은 저장소 전체를 되돌려 놓으므로 옛 메모가 다시 나타날 수
+   * 있고, 그때 또 흡수해야 한다. 비어 있으면 아무것도 쓰지 않는다.
    *
    * @returns {Promise<number>} 옮긴 항목 수
    */
-  async migrateLegacyKeys() {
-    const data = await storageManager.get('userNotes');
-    const notesMap = data.userNotes || {};
+  async migrateFromLegacyNotes() {
+    const data = await storageManager.get(LEGACY_NOTES_KEY);
+    const legacy = data[LEGACY_NOTES_KEY] || {};
+    const entries = Object.entries(legacy);
+    if (entries.length === 0) return 0;
 
-    const next = {};
+    // 옛 키와 정규화된 키가 같은 사람을 가리킬 수 있다. 오래된 것부터 넣어 최신이 남게 한다.
+    entries.sort(([, a], [, b]) => String(a?.updatedAt || '').localeCompare(String(b?.updatedAt || '')));
+
     let moved = 0;
-
-    for (const [rawKey, value] of Object.entries(notesMap)) {
-      const key = normalizeUserKey(rawKey);
-      if (!key) continue;
-      if (key !== rawKey) moved++;
-
-      const entry = { ...value, userKey: key };
-      if (entry.identity === undefined) entry.identity = USER_IDENTITY.UNKNOWN;
-      if (entry.label === undefined) {
-        // 옛 키가 닉네임이었다면 그 문자열이 곧 표시용 이름이다.
-        const { type, value: parsed } = parseUserKey(key);
-        entry.label = type === USER_KEY_TYPES.NICK ? parsed : '';
-      }
-
-      const existing = next[key];
-      if (existing && String(existing.updatedAt || '') > String(entry.updatedAt || '')) continue;
-      next[key] = entry;
+    for (const [rawKey, value] of entries) {
+      const saved = await this.setNote(rawKey, value?.note || '', Boolean(value?.isBlocked), {
+        label: value?.label,
+        identity: value?.identity
+      });
+      if (saved) moved++;
     }
 
-    // 키 이동뿐 아니라 label/identity 백필도 저장 대상이다. 아무것도 안 바뀌었으면 쓰지 않는다.
-    // (`next` 는 `notesMap` 순회 순서로 만들어지므로 변화가 없으면 직렬화 결과가 같다.)
-    if (moved === 0 && JSON.stringify(notesMap) === JSON.stringify(next)) return 0;
-
-    await storageManager.set({ userNotes: next });
+    await storageManager.set({ [LEGACY_NOTES_KEY]: {} });
     return moved;
   }
 
@@ -183,6 +236,21 @@ export class UserNotesFeature extends BaseFeature {
     const head = parts.join(' · ');
     const tail = `${type}:${value}`;
     return head ? `${head} (${tail})` : tail;
+  }
+
+  /**
+   * 메모가 페이지에서 어떻게 처리되는지 한국어로. (설정 화면 목록용)
+   * @param {{action?: string, galleryId?: string|null}} entry
+   */
+  describeAction(entry = {}) {
+    const labels = {
+      [USER_RULE_ACTIONS.LABEL]: '메모만',
+      [USER_RULE_ACTIONS.DIM]: '흐리게',
+      [USER_RULE_ACTIONS.BLIND]: '차단(펼치기 가능)',
+      [USER_RULE_ACTIONS.HIDE]: '완전히 숨김'
+    };
+    const action = labels[entry.action] || '메모만';
+    return entry.galleryId ? `${action} · ${entry.galleryId} 갤러리` : action;
   }
 }
 

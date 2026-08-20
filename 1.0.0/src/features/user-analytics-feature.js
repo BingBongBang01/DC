@@ -156,7 +156,10 @@ export class UserAnalyticsFeature extends BaseFeature {
         value,
         memo: memo || `${label} 차단`,
         action: action === 'memo' ? 'label' : 'blind',
-        galleryId: galleryId || null
+        galleryId: galleryId || null,
+        // 설정 화면의 메모 목록이 `uid:guest1433` 대신 누구인지 보여줄 수 있도록 남긴다.
+        label: user.nick || '',
+        identity: user.identity || ''
       });
 
       const status = box.querySelector('.dcu-analytics-status');

@@ -322,9 +322,13 @@ function applyTranslations() {
       const safeNote = escapeHTML(noteObj.note);
       // `uid:guest1433` 만 보이면 누구인지 알 수 없으므로 닉네임·신분을 함께 보여준다.
       const safeLabel = escapeHTML(userNotesFeature.describeKey(key, noteObj));
+      // 메모가 유저 규칙과 같은 저장소를 쓰므로, 페이지에서 실제로 어떻게 처리되는지 밝힌다.
+      const safeAction = escapeHTML(userNotesFeature.describeAction(noteObj));
       card.innerHTML = `
         <div>
-          <b>${safeLabel}</b>: ${safeNote} ${noteObj.isBlocked ? t('user_blocked') : ''}
+          <b>${safeLabel}</b>: ${safeNote}
+          <span style="font-size:11px; color:#64748b;">— ${safeAction}</span>
+          ${noteObj.isBlocked ? t('user_blocked') : ''}
         </div>
         <button class="md3-button md3-button--danger btn-del-note" style="height: 32px; padding: 0 12px;" data-key="${safeKey}">${t('common_delete')}</button>
       `;
@@ -341,11 +345,11 @@ function applyTranslations() {
     });
   };
 
-  // 예전 자유 입력 키가 남아 있으면 목록을 그리기 전에 정규화해 둔다.
+  // 예전 `userNotes` 저장소에 남은 메모가 있으면 목록을 그리기 전에 유저 규칙으로 흡수한다.
   try {
-    await userNotesFeature.migrateLegacyKeys();
+    await userNotesFeature.migrateFromLegacyNotes();
   } catch (err) {
-    logger.debug('options: user note key migration skipped:', err);
+    logger.debug('options: legacy note merge skipped:', err);
   }
   await renderUserNotes();
 
