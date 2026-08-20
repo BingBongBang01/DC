@@ -20,6 +20,7 @@ import {
 } from '../src/core/identity.js';
 import { userNotesFeature } from '../src/features/user-notes-feature.js';
 import { storageManager } from '../src/core/storage-manager.js';
+import { nicknameHolders, ipBand } from '../src/core/archive/activity-analyzer.js';
 
 const FIXTURES = path.join(process.cwd(), 'tests', 'fixtures');
 const readFixture = (name) => fs.readFileSync(path.join(FIXTURES, name), 'utf-8');
@@ -190,6 +191,65 @@ export async function runIdentityTests() {
 
   await storageManager.set({ userNotes: {} });
   console.log('✅ [Identity] 옛 자유 입력 키가 정규화 키로 한 번만 이동함');
+
+  // 7. 닉네임 규칙의 사정거리 — 픽스처의 ㅇㅇ 10명을 아카이브 레코드 모양으로 옮겨 센다
+  const records = writers
+    .filter(w => w.nick)
+    .map((w, i) => ({
+      author: w.nick,
+      authorId: w.uid || null,
+      ip: w.ip || null,
+      authorKey: w.key,
+      postNo: 1000 + i
+    }));
+
+  const reach = nicknameHolders(records, 'ㅇㅇ');
+  assert.strictEqual(reach.nickname, 'ㅇㅇ');
+  assert.strictEqual(reach.sampled, 10, '이 닉네임으로 관측된 글이 10건');
+  assert.strictEqual(reach.holders.length, 10, '식별자 10개 — 닉네임 규칙은 이들 모두에게 걸린다');
+  assert.strictEqual(reach.accountCount, 3, '계정(반고닉 3명)');
+  assert.strictEqual(reach.ipCount, 7, '유동닉 IP 7개');
+
+  // 고닉은 닉네임이 곧 개인이라 사정거리가 1이다
+  const single = nicknameHolders(records, '헤르 미온느');
+  assert.strictEqual(single.holders.length, 1);
+  assert.strictEqual(single.accountCount, 1);
+  assert.ok(single.sampled > 1, '같은 사람의 글이 여러 건이어도 식별자는 하나');
+
+  // 한 사람이 여러 건 써도 식별자 수는 늘지 않고, 건수만 쌓인다
+  assert.strictEqual(single.holders[0].count, single.sampled);
+
+  assert.deepStrictEqual(
+    nicknameHolders(records, '없는닉'),
+    { nickname: '없는닉', sampled: 0, holders: [], accountCount: 0, ipCount: 0 }
+  );
+  assert.strictEqual(nicknameHolders(records, '   ').nickname, '', '빈 닉네임은 집계하지 않음');
+  assert.strictEqual(nicknameHolders(null, 'ㅇㅇ').sampled, 0, '레코드가 없어도 안전');
+
+  // authorKey 가 없는 옛 레코드도 uid/ip 로 키를 만들어 센다
+  const legacyRecords = [
+    { author: 'ㅇㅇ', authorId: 'guest1433' },
+    { author: 'ㅇㅇ', authorId: 'guest1433' },
+    { author: 'ㅇㅇ', ip: '175.223' }
+  ];
+  const legacyReach = nicknameHolders(legacyRecords, 'ㅇㅇ');
+  assert.strictEqual(legacyReach.holders.length, 2);
+  assert.strictEqual(legacyReach.accountCount, 1);
+  assert.strictEqual(legacyReach.ipCount, 1);
+  console.log('✅ [Identity] 닉네임 ㅇㅇ 규칙이 식별자 10개(계정 3 · IP 7)에 걸리는 것을 셈');
+
+  // 8. IP 대역 비교 — 2옥텟 입력에서 접두 비교가 깨지던 회귀 방지
+  assert.strictEqual(ipBand('175.223'), '175.223', '이미 2옥텟이면 그대로');
+  assert.strictEqual(ipBand('175.223.45.1'), '175.223');
+  assert.strictEqual(ipBand(''), '');
+  assert.strictEqual(ipBand(null), '');
+
+  // 디시 목록의 IP 는 2옥텟이라 `startsWith(band + '.')` 는 늘 거짓이었다.
+  // 대역끼리 비교해야 같은 대역을 찾아낸다.
+  const band = ipBand('175.223');
+  assert.strictEqual('175.223'.startsWith(`${band}.`), false, '옛 접두 비교가 실패하는 이유');
+  assert.strictEqual(ipBand('175.223') === band, true, '대역끼리 비교하면 매칭됨');
+  console.log('✅ [Identity] 2옥텟 IP 에서도 같은 대역이 매칭됨');
 
   console.log('--- Identity Tests Passed ---');
 }

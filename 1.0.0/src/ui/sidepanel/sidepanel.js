@@ -1240,6 +1240,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     userRuleForm?.classList.add('hidden');
   });
 
+  // --- 닉네임 규칙의 사정거리 ---
+  // `ㅇㅇ` 같은 닉네임에 규칙을 걸면 무관한 다수가 함께 걸린다. 아카이브 기록으로
+  // "이 닉네임을 쓰는 식별자가 몇 개인지" 미리 보여준다.
+  async function fetchNickReach(nickname) {
+    const galleryId = activeGalleryId();
+    if (!galleryId || !nickname) return null;
+    const res = await messageRouter.send(MessageAction.ARCHIVE_NICK_HOLDERS, { galleryId, nickname });
+    return res && res.success ? res.data : null;
+  }
+
+  function describeNickReach(reach) {
+    if (!reach) return '';
+    if (!reach.sampled) return '이 갤러리 기록에는 이 닉네임이 아직 없습니다.';
+
+    const parts = [];
+    if (reach.accountCount) parts.push(`계정 ${reach.accountCount}개`);
+    if (reach.ipCount) parts.push(`유동닉 IP ${reach.ipCount}개`);
+    const breakdown = parts.length ? ` (${parts.join(' · ')})` : '';
+
+    if (reach.holders.length <= 1) {
+      return `이 갤러리 기록에서는 1개 식별자만 이 닉네임을 씁니다${breakdown}.`;
+    }
+    return `이 닉네임을 쓰는 식별자가 ${reach.holders.length}개입니다${breakdown}. 닉네임 규칙은 이들 모두에게 적용됩니다.`;
+  }
+
+  let nickReachTimer = null;
+  const updateNickReachHint = () => {
+    const type = document.getElementById('sp-user-rule-type')?.value || 'nick';
+    const value = document.getElementById('sp-user-rule-value')?.value.trim() || '';
+    if (type !== 'nick' || !value) {
+      setStatus('sp-user-rule-status', '');
+      return;
+    }
+
+    clearTimeout(nickReachTimer);
+    nickReachTimer = setTimeout(async () => {
+      const reach = await fetchNickReach(value);
+      // 응답이 늦게 오는 사이 입력이 바뀌었으면 버린다 (오래된 숫자를 띄우지 않도록).
+      if ((document.getElementById('sp-user-rule-value')?.value.trim() || '') !== value) return;
+
+      const text = describeNickReach(reach);
+      // 여러 명이 걸리는 경우만 경고색으로 띄운다.
+      if (text) setStatus('sp-user-rule-status', text, (reach?.holders.length || 0) > 1);
+    }, 300);
+  };
+
+  document.getElementById('sp-user-rule-value')?.addEventListener('input', updateNickReachHint);
+  document.getElementById('sp-user-rule-type')?.addEventListener('change', updateNickReachHint);
+
   userRuleForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -1249,13 +1298,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const type = document.getElementById('sp-user-rule-type')?.value || 'nick';
+
+    // 닉네임 규칙은 사정거리를 확인받고 나서 만든다.
+    if (type === 'nick') {
+      const reach = await fetchNickReach(value);
+      if (reach && reach.holders.length > 1) {
+        const ok = confirm(
+          `${describeNickReach(reach)}\n\n`
+          + '개인 한 명만 겨냥하려면 대상을 "유저 아이디(uid)"로 바꾸세요.\n'
+          + '그대로 등록할까요?'
+        );
+        if (!ok) return;
+      }
+    }
+
     const scoped = document.getElementById('sp-user-rule-gallery')?.checked;
-    const galleryId = scoped
-      ? (appStore.selectedGallery?.galleryId || appStore.currentGallery?.galleryId || galleryInput?.value.trim() || null)
-      : null;
+    const galleryId = scoped ? (activeGalleryId() || null) : null;
 
     const res = await messageRouter.send(MessageAction.USER_RULE_ADD, {
-      type: document.getElementById('sp-user-rule-type')?.value || 'nick',
+      type,
       value,
       memo: document.getElementById('sp-user-rule-memo')?.value.trim() || '',
       action: document.getElementById('sp-user-rule-action')?.value || 'blind',

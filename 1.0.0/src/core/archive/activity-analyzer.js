@@ -4,6 +4,7 @@
  * Works on the records the archive keeps, so the same code can run in the
  * background (Side Panel queries) and be unit tested without a DOM.
  */
+import { userKeyOf, parseUserKey } from '../identity.js';
 
 /**
  * DCInside 날짜 문자열을 시각으로 바꾼다.
@@ -141,6 +142,65 @@ export function galleryShareStats(posts, sampleSize = 200) {
 }
 
 /**
+ * IP 대역(앞 두 옥텟). 디시가 유동닉 IP 를 이미 2옥텟까지만 공개하므로 목록에서 모은
+ * 값에 대해서는 입력과 같은 값이 나온다 — 대역 비교는 반드시 이 함수끼리 해야 하고,
+ * `ip.startsWith(band + '.')` 같은 접두 비교는 2옥텟 입력에서 절대 참이 되지 않는다.
+ * @param {string} ip
+ * @returns {string}
+ */
+export function ipBand(ip) {
+  return String(ip || '').split('.').slice(0, 2).join('.');
+}
+
+/**
+ * 한 닉네임을 실제로 몇 명이 쓰고 있는지 — `nick` 규칙의 사정거리.
+ *
+ * `ㅇㅇ` 처럼 겹치는 닉네임에 차단 규칙을 걸면 무관한 다수가 함께 걸린다. 규칙을 만들기
+ * 전에 그 범위를 숫자로 보여주기 위한 집계다.
+ *
+ * 정확히 무엇을 세는지:
+ *   - `accountCount` — uid 를 가진 계정 수. 아카이브에는 닉 아이콘 정보가 없어
+ *     고닉과 반고닉을 가릴 수 없으므로 둘을 합쳐 센다.
+ *   - `ipCount` — 서로 다른 유동닉 IP 수. **사람 수가 아니다**: 한 사람이 대역을
+ *     바꾸면 여러 개로, 남 여럿이 한 대역을 쓰면 하나로 세어진다.
+ *   - 아카이브에 없는 사람은 세어지지 않으므로 전체가 아니라 **하한값**이다.
+ *
+ * @param {Array<Object>} records 아카이브 글·댓글 레코드
+ * @param {string} nickname
+ * @returns {{nickname: string, sampled: number, holders: Array<{authorKey: string, count: number}>, accountCount: number, ipCount: number}}
+ */
+export function nicknameHolders(records, nickname) {
+  const wanted = String(nickname || '').trim();
+  if (!wanted) return { nickname: '', sampled: 0, holders: [], accountCount: 0, ipCount: 0 };
+
+  const holders = new Map();
+  let sampled = 0;
+
+  for (const record of records || []) {
+    if (String(record.author || '').trim() !== wanted) continue;
+    sampled++;
+
+    const key = record.authorKey
+      || userKeyOf({ uid: record.authorId, ip: record.ip, nick: record.author });
+    const entry = holders.get(key) || { authorKey: key, count: 0 };
+    entry.count++;
+    holders.set(key, entry);
+  }
+
+  const list = Array.from(holders.values()).sort((a, b) => b.count - a.count);
+
+  let accountCount = 0;
+  let ipCount = 0;
+  for (const holder of list) {
+    const { type } = parseUserKey(holder.authorKey);
+    if (type === 'uid') accountCount++;
+    else if (type === 'ip') ipCount++;
+  }
+
+  return { nickname: wanted, sampled, holders: list, accountCount, ipCount };
+}
+
+/**
  * 같은 IP 대역(앞 두 옥텟)에서 여러 닉네임이 나오는지 — 통피/다중 계정 의심 신호.
  *
  * 주의: DC 가 유동닉 IP 를 이미 2옥텟까지만 공개하므로(`175.223`), 아래 `slice(0, 2)` 는
@@ -158,7 +218,7 @@ export function suspiciousIpBands(posts, minNicknames = 3) {
 
   for (const post of posts || []) {
     if (!post.ip) continue;
-    const band = post.ip.split('.').slice(0, 2).join('.');
+    const band = ipBand(post.ip);
     if (!band) continue;
 
     const entry = bands.get(band) || { band, nicknames: new Set(), count: 0 };
