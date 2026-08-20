@@ -8,6 +8,7 @@ import { articleParser } from '../parser/article-parser.js';
 import { commentParser } from '../parser/comment-parser.js';
 import { SELECTORS } from '../adapters/selectors.js';
 import { escapeHTML } from '../utils/sanitizer.js';
+import { configManager } from '../core/config-manager.js';
 import { logger } from '../core/logger.js';
 
 export class HoverPreviewFeature extends BaseFeature {
@@ -21,6 +22,24 @@ export class HoverPreviewFeature extends BaseFeature {
     this._handleMouseOver = this._handleMouseOver.bind(this);
     this._handleMouseOut = this._handleMouseOut.bind(this);
     this._handleKeyDown = this._handleKeyDown.bind(this);
+  }
+
+  /**
+   * 미리보기 세부 설정. 사이드패널 [보기] 패널에서 조절한다.
+   * 값이 비었거나 이상하면 기본값으로 되돌린다.
+   */
+  _options() {
+    const int = (key, fallback, min, max) => {
+      const raw = Number(configManager.get(key));
+      if (!Number.isFinite(raw)) return fallback;
+      return Math.min(max, Math.max(min, Math.round(raw)));
+    };
+    return {
+      delayMs: int('previewDelayMs', 300, 0, 2000),
+      bodyChars: int('previewBodyChars', 200, 50, 1000),
+      thumbCount: int('previewThumbCount', 4, 0, 8),
+      cacheTtlMs: int('previewCacheTtlMin', 10, 1, 120) * 60 * 1000
+    };
   }
 
   async onEnable() {
@@ -64,10 +83,9 @@ export class HoverPreviewFeature extends BaseFeature {
     this.activeAnchor = anchor;
     this._clearHoverTimeout();
 
-    // 300ms hover delay
     this.hoverTimeout = setTimeout(() => {
       this._showPreviewFor(anchor);
-    }, 300);
+    }, this._options().delayMs);
   }
 
   _handleMouseOut(e) {
@@ -85,9 +103,24 @@ export class HoverPreviewFeature extends BaseFeature {
     }
   }
 
+  /**
+   * 목록 행에 이미 찍혀 있는 `[12]` 를 읽는다. 본문을 받아오기 전에 쓸 임시값이고,
+   * fetch 한 문서에는 댓글이 AJAX 라 목록이 없으므로 최종 폴백으로도 쓴다.
+   * @param {HTMLAnchorElement} anchor
+   * @returns {number|null}
+   */
+  _commentCountFromRow(anchor) {
+    const row = anchor.closest('tr, li');
+    const badge = row ? row.querySelector('.reply_num, .cmt_num') : null;
+    if (!badge) return null;
+    const digits = badge.textContent.replace(/[^0-9]/g, '');
+    return digits ? parseInt(digits, 10) : null;
+  }
+
   async _showPreviewFor(anchor) {
     const url = anchor.href;
     const cacheKey = `preview_${url}`;
+    const rowCount = this._commentCountFromRow(anchor);
 
     // 1. Check cache
     let cachedData = cacheManager.get(cacheKey);
@@ -103,10 +136,16 @@ export class HoverPreviewFeature extends BaseFeature {
         const doc = parser.parseFromString(html, 'text/html');
 
         const article = articleParser.parseView(doc);
-        const comments = commentParser.parseList(doc);
+        // 댓글은 AJAX 로 채워지므로 fetch 한 문서에서는 거의 항상 0건이 나온다.
+        // 파싱된 목록 → 헤더의 "댓글 N" → 목록 행의 [N] 순으로 믿을 수 있는 값을 쓴다.
+        const parsedComments = commentParser.parseList(doc).length;
+        const commentsCount = parsedComments
+          || (article && Number(article.comments))
+          || rowCount
+          || 0;
 
-        cachedData = { article, commentsCount: comments.length };
-        cacheManager.set(cacheKey, cachedData, 10 * 60 * 1000); // 10 min TTL
+        cachedData = { article, commentsCount };
+        cacheManager.set(cacheKey, cachedData, this._options().cacheTtlMs);
       } catch (err) {
         if (err.name === 'AbortError') return;
         logger.warn('Failed to fetch preview for URL:', url, err);
@@ -143,14 +182,18 @@ export class HoverPreviewFeature extends BaseFeature {
       line-height: 1.4;
     `;
 
+    const { bodyChars, thumbCount } = this._options();
     const safeTitle = escapeHTML(article.title);
     const safeAuthor = escapeHTML(article.author || '익명');
-    const safeBody = escapeHTML(article.body ? article.body.substring(0, 200) + '...' : '본문 텍스트가 없습니다.');
+    const bodyText = article.body
+      ? article.body.substring(0, bodyChars) + (article.body.length > bodyChars ? '...' : '')
+      : '본문 텍스트가 없습니다.';
+    const safeBody = escapeHTML(bodyText);
 
     // 첨부 이미지는 텍스트 안내 대신 실제 썸네일로 보여준다.
     const thumbs = (article.media || [])
       .filter(item => item && item.url && (item.type === 'image' || item.type === 'gif'))
-      .slice(0, 4)
+      .slice(0, thumbCount)
       .map(item => `<img class="dcu-preview-thumb" src="${escapeHTML(item.url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`)
       .join('');
     const safeIp = article.ip ? `(${escapeHTML(article.ip)})` : '';

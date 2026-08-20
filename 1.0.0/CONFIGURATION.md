@@ -1,11 +1,11 @@
 # DC Ultimate Configuration & Storage Schema
 
-## Storage Schema Version: `2.0.0`
+## Storage Schema Version: `2.0.2`
 
 ### Keys Specification
 ```json
 {
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "2.0.2",
   "settings": {
     "theme": "system",
     "syncDcDarkMode": true,
@@ -52,6 +52,31 @@
   }
 }
 ```
+
+---
+
+## 사이드패널 설정 위치 (2.0.2)
+
+2.0.2 부터 `settings` 의 모든 사용자 설정에 사이드패널 UI 가 있습니다. 어느 패널에서
+무엇을 켜고 끄는지:
+
+| 타일 | 여기서 조절하는 설정 |
+| --- | --- |
+| **검색** | `enableSearchEngine` |
+| **갤러리** | `enableNavigationShortcuts`, `enableUrlRedirect`, `autoRefreshInterval` |
+| **알림** | `soundNotifications` |
+| **차단** | `enableUserBlock`, `enableUserNotes`, `enableSpamFilter` + `spam*` |
+| **작성** | `enableAutoSignature` + `autoSig*`, `enableDraftAutosave` + `draftAutosaveIntervalSec`, `enableDcconFavorites` |
+| **보관** | `enableArchiveCache`, `enableArchiveCapture`, `archiveDefaultMode` |
+| **분석** | `enableUserAnalytics`, `analyticsSampleSize` |
+| **보기** | `enableInfiniteScroll` + `infiniteScrollMaxPages`, `enableHotHighlight` + `hot*`, `enableReadingLayout`, `hideAdWings`, `enableCleanUI`, `enableCommentTree`, `enableMarkdownCode` + `markdownRenderPosts`, `enableHoverPreview` + `preview*` |
+| **설정** | `theme`, `syncDcDarkMode`, `enableAIFeatures` + `aiSettings`, `enableMediaTools`, `enableCommentTools`, `enableAutomation`, `openSidePanelOnActionClick`, `testFeature` |
+
+모든 컨트롤은 **즉시 저장**입니다(별도 저장 버튼 없음). 예외는 API 키가 함께 가는
+`설정 → AI 설정 저장` 뿐입니다. 대부분의 설정은 디시 탭을 새로고침해야 반영됩니다.
+
+타일 순서는 드래그로 바꿀 수 있고 `settings.spTileOrder` 에 저장됩니다. 저장본에 없는
+신규 타일은 뒤에 붙으므로 버전이 올라가도 사용자의 순서는 깨지지 않습니다.
 
 ---
 
@@ -126,6 +151,26 @@
 
 ---
 
+## 미리보기 팝업 (2.0.2)
+
+`settings` 추가 키. 전부 사이드패널 **보기 → 미리보기 팝업 → 미리보기 세부 설정** 에서
+조절합니다. 2.0.1 까지는 모두 코드에 하드코딩돼 있었습니다.
+
+| 키 | 기본값 | 범위 | 설명 |
+| --- | --- | --- | --- |
+| `enableHoverPreview` | `true` | — | 목록에서 글 제목에 마우스를 올렸을 때 팝업 표시 |
+| `previewDelayMs` | `300` | 0~2000 | 마우스를 올린 뒤 팝업이 뜨기까지의 지연(ms) |
+| `previewBodyChars` | `200` | 50~1000 | 팝업에 보여 줄 본문 글자 수 |
+| `previewThumbCount` | `4` | 0~8 | 첨부 이미지 썸네일 최대 장수 (`0` = 숨김) |
+| `previewCacheTtlMin` | `10` | 1~120 | 받아온 본문을 캐시에 유지할 시간(분) |
+
+범위를 벗어난 값은 저장 시 경계값으로 잘리고 입력칸도 함께 되돌아갑니다.
+
+> 팝업의 **댓글 수**는 `fetch` 한 문서에서 댓글 목록을 셀 수 없습니다(디시가 댓글을 AJAX 로
+> 채웁니다). 본문 헤더의 `.gall_comment`("댓글 N") → 목록 행의 `[N]` 순으로 읽습니다.
+
+---
+
 ## 자짤 (자동 첨부 이미지)
 
 | 키 | 기본값 | 설명 |
@@ -146,11 +191,17 @@
 | --- | --- | --- |
 | `enableArchiveCache` | `true` | 글/댓글 자동 캐시 (삭제 시 복구) |
 | `enableArchiveCapture` | `true` | 원클릭 박제 버튼 및 Shift+A 단축키 |
-| `enableCommentTree` | `true` | 대댓글 트리 + 글쓴이 댓글 강조 |
-| `commentTreeEnabled` | `true` | 트리 정렬을 기본으로 적용할지 |
+| `enableCommentTree` | `true` | 글쓴이 댓글 강조 + 글쓴이 댓글만 보기 (사이드패널 **보기** 패널) |
 | `enableUserAnalytics` | `true` | 닉네임/IP Alt+클릭 활동 팝오버 |
 | `archiveDefaultMode` | `"cache"` | 단축키 기본 동작 (`cache`/`image`/`pdf`/`archive-today`) |
 | `analyticsSampleSize` | `200` | 지분율 계산 표본 글 수 |
+
+> **2.0.2에서 제거됨** — `commentTreeEnabled`. `enableCommentTree` 와 중복된 키였고, 이 키가
+> 켜던 "대댓글 재정렬" 자체가 제거됐습니다(디시가 depth 0 댓글의 `<li>` 를 닫지 않아 답글
+> 묶음이 형제 `<li>` 로 파싱되는데, 최상위 댓글만 옮기면 답글 묶음이 제자리에 남아 대댓글이
+> 목록 맨 위로 올라갔습니다). 마이그레이션이 키를 걷어내며, `commentTreeEnabled: false` 였던
+> 사용자는 `enableCommentTree` 도 `false` 로 넘어갑니다. 정렬은 디시 네이티브의
+> `등록순 / 최신순 / 답글순` 을 쓰세요.
 
 아카이브 본체는 확장 프로그램 오리진의 **IndexedDB**(`dc_ultimate_archive`)에 저장됩니다.
 콘텐츠 스크립트는 수집한 내용을 메시지로 넘기고 저장은 백그라운드가 전담하므로,

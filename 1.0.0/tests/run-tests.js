@@ -24,10 +24,11 @@ import { runPhase21Tests } from './phase21.test.js';
 import { runPhase22Tests } from './phase22.test.js';
 import { runPageLayoutTests } from './page-layout.test.js';
 import { runServiceTilesTests } from './service-tiles.test.js';
+import { runArticleViewTests } from './article-view.test.js';
 
 async function main() {
   console.log('===========================================================');
-  console.log('  DC Ultimate Complete Production Test Suite (Phases 1-22)');
+  console.log('  DC Ultimate Complete Production Test Suite');
   console.log('===========================================================\n');
 
   try {
@@ -74,9 +75,11 @@ async function main() {
     await runPageLayoutTests();
     console.log('');
     await runServiceTilesTests();
+    console.log('');
+    await runArticleViewTests();
 
     console.log('\n===========================================================');
-    console.log('  🎉 ALL PHASE 1 THROUGH PHASE 19 TESTS PASSED SUCCESSFULLY!');
+    console.log('  🎉 ALL TESTS PASSED SUCCESSFULLY!');
     console.log('===========================================================\n');
   } catch (err) {
     console.error('\n❌ TEST FAILURE ENCOUNTERED:');

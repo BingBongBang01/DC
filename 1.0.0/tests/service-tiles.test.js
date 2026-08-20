@@ -103,14 +103,23 @@ export async function runServiceTilesTests() {
   const dots = dom.window.document.getElementById('dots');
 
   const order = normalizeTileOrder(['write', 'alerts']);
-  renderServiceBar(bar, order, 3);
-  assert.strictEqual(bar.querySelectorAll('.sp-tile-page').length, 3, '8개/3칸이 3페이지로 나뉘지 않았습니다.');
+  const PER_PAGE = 3;
+  // 타일이 추가돼도 깨지지 않도록 개수를 하드코딩하지 않고 order 에서 유도한다.
+  const expectedPages = pageCount(order.length, PER_PAGE);
+  const expectedLastPage = order.length - (expectedPages - 1) * PER_PAGE;
+
+  renderServiceBar(bar, order, PER_PAGE);
+  assert.strictEqual(
+    bar.querySelectorAll('.sp-tile-page').length,
+    expectedPages,
+    `${order.length}개/${PER_PAGE}칸이 ${expectedPages}페이지로 나뉘지 않았습니다.`
+  );
   assert.strictEqual(bar.querySelectorAll('.sp-tile').length, order.length, '타일이 누락됐습니다.');
   assert.deepStrictEqual(readOrderFromDom(bar), order, 'DOM 순서가 요청한 순서와 다릅니다.');
   assert.strictEqual(
-    bar.querySelectorAll('.sp-tile-page')[2].children.length,
-    2,
-    '마지막 페이지에 나머지 2개가 들어가지 않았습니다.'
+    bar.querySelectorAll('.sp-tile-page')[expectedPages - 1].children.length,
+    expectedLastPage,
+    `마지막 페이지에 나머지 ${expectedLastPage}개가 들어가지 않았습니다.`
   );
   assert.ok(
     bar.querySelector('.sp-tile[data-view="alerts"] #sp-tile-badge-alerts'),
@@ -126,8 +135,8 @@ export async function runServiceTilesTests() {
     '타일에 role="tab" 이 없습니다.'
   );
 
-  // 재렌더는 이전 타일을 남기지 않는다
-  renderServiceBar(bar, order, 8);
+  // 재렌더는 이전 타일을 남기지 않는다 (전부 한 페이지에 담아 1페이지를 보장한다)
+  renderServiceBar(bar, order, order.length);
   assert.strictEqual(bar.querySelectorAll('.sp-tile-page').length, 1, '재렌더 후 페이지가 정리되지 않았습니다.');
   assert.strictEqual(bar.querySelectorAll('.sp-tile').length, order.length, '재렌더가 타일을 중복 생성했습니다.');
   console.log('✅ [Tiles] 페이지 렌더가 순서/배지/아이콘을 유지하고 재렌더 시 중복되지 않는다');

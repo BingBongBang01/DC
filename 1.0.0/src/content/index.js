@@ -68,7 +68,7 @@ const lazy = {
   dcconFavorites: null,
   markdownCode: null,
   archiveCapture: null,
-  commentTree: null
+  commentAuthor: null
 };
 
 const LAZY_FEATURES = {
@@ -78,7 +78,7 @@ const LAZY_FEATURES = {
   dcconFavorites: () => import('../features/dccon-favorites-feature.js').then(m => m.dcconFavoritesFeature),
   markdownCode: () => import('../features/markdown-code-feature.js').then(m => m.markdownCodeFeature),
   archiveCapture: () => import('../features/archive-capture-feature.js').then(m => m.archiveCaptureFeature),
-  commentTree: () => import('../features/comment-tree-feature.js').then(m => m.commentTreeFeature)
+  commentAuthor: () => import('../features/comment-author-feature.js').then(m => m.commentAuthorFeature)
 };
 
 /**
@@ -92,7 +92,7 @@ function lazyFeaturesForPage() {
     return ['autoSignature', 'draftAutosave', 'markdownCode', 'dcconFavorites'];
   }
   if (/\/board\/view/.test(path)) {
-    return ['archiveCapture', 'commentTree', 'dcconFavorites', 'markdownCode', 'ai'];
+    return ['archiveCapture', 'commentAuthor', 'dcconFavorites', 'markdownCode', 'ai'];
   }
   return []; // 목록/검색 페이지는 위 피처가 모두 불필요
 }
@@ -142,7 +142,7 @@ function applyListFeatures(pageInfo) {
 
   // 댓글은 본문 로드 후 비동기로 붙으므로 변경마다 다시 처리한다.
   try {
-    if (lazy.commentTree?.enabled) lazy.commentTree.apply();
+    if (lazy.commentAuthor?.enabled) lazy.commentAuthor.apply();
     if (lazy.archiveCapture?.enabled) lazy.archiveCapture.mountButton();
     if (archiveCacheFeature.enabled) archiveCacheFeature.captureSoon();
   } catch (err) {

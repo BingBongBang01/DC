@@ -1,5 +1,6 @@
 import { themeSystem } from '../theme/theme-system.js';
 import { configManager } from '../../core/config-manager.js';
+import { storageManager } from '../../core/storage-manager.js';
 import { eventBus } from '../../core/event-bus.js';
 import { messageRouter } from '../../core/message-router.js';
 import { searchAggregationFeature } from '../../features/search-aggregation-feature.js';
@@ -1105,6 +1106,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     box.classList.remove('hidden');
   }
 
+  /** 디시 탭에 반영되려면 새로고침이 필요한 설정들의 공통 안내 문구. */
+  const RELOAD_HINT = '설정을 저장했습니다. 디시 탭을 새로고침하면 적용됩니다.';
+
+  /**
+   * 체크박스 ↔ 설정 키를 묶어 즉시 저장으로 배선한다.
+   *
+   * 예전에는 [보기] 패널만 "저장" 버튼을 눌러야 반영되고 다른 패널은 즉시
+   * 저장이라 규칙이 갈렸다. 전부 즉시 저장으로 통일한다.
+   *
+   * 값은 설정 키 문자열이거나 `{ key, defaultOn }` 이다. 스키마에 없는 키는
+   * `get()` 이 undefined 를 주는데 그때 켜진 것으로 오해하지 않도록
+   * `defaultOn: false` 를 명시할 수 있게 했다.
+   *
+   * @param {Record<string, string|{key: string, defaultOn?: boolean}>} map elementId -> 설정 키
+   * @param {string} statusElementId 안내 문구를 띄울 요소 id
+   */
+  function bindToggles(map, statusElementId) {
+    Object.entries(map).forEach(([elementId, spec]) => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+
+      const key = typeof spec === 'string' ? spec : spec.key;
+      const defaultOn = typeof spec === 'string' ? true : spec.defaultOn !== false;
+
+      const stored = configManager.get(key);
+      el.checked = stored === undefined || stored === null ? defaultOn : stored !== false;
+
+      el.addEventListener('change', async () => {
+        await configManager.set(key, el.checked);
+        setStatus(statusElementId, RELOAD_HINT);
+      });
+    });
+  }
+
+  /**
+   * 숫자 입력/셀렉트 ↔ 설정 키를 묶어 즉시 저장으로 배선한다.
+   * 범위를 벗어난 값은 입력칸까지 되돌려 놓아 저장값과 화면이 어긋나지 않게 한다.
+   *
+   * @param {Record<string, {key: string, min: number, max: number, fallback: number}>} map
+   * @param {string} statusElementId
+   */
+  function bindNumbers(map, statusElementId) {
+    Object.entries(map).forEach(([elementId, spec]) => {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+
+      const read = () => {
+        const raw = Number(configManager.get(spec.key));
+        return Number.isFinite(raw) ? Math.min(spec.max, Math.max(spec.min, Math.round(raw))) : spec.fallback;
+      };
+      el.value = String(read());
+
+      el.addEventListener('change', async () => {
+        const parsed = Number(el.value);
+        const clamped = Number.isFinite(parsed)
+          ? Math.min(spec.max, Math.max(spec.min, Math.round(parsed)))
+          : spec.fallback;
+        el.value = String(clamped);
+        await configManager.set(spec.key, clamped);
+        setStatus(statusElementId, RELOAD_HINT);
+      });
+    });
+  }
+
   async function renderUserRules() {
     const container = document.getElementById('sp-user-rule-list');
     if (!container) return;
@@ -1256,41 +1321,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     setStatus('sp-spam-status', '도배 필터를 저장했습니다. 디시 탭을 새로고침하면 적용됩니다.');
   });
 
-  // --- 보기 옵션 ---
+  // --- 보기 / 읽기 / 미리보기 옵션 ---
+  // 전부 즉시 저장이다. "저장" 버튼이 있던 시절엔 이 패널만 규칙이 달라
+  // 체크만 하고 나가면 반영되지 않는 함정이 있었다.
   function loadViewSettings() {
-    const map = {
+    bindToggles({
       'sp-opt-infinite': 'enableInfiniteScroll',
-      'sp-opt-hot': 'enableHotHighlight',
-      'sp-opt-markdown': 'enableMarkdownCode',
-      'sp-opt-draft': 'enableDraftAutosave',
-      'sp-opt-dccon': 'enableDcconFavorites'
-    };
-    Object.entries(map).forEach(([elementId, key]) => {
-      const el = document.getElementById(elementId);
-      if (el) el.checked = configManager.get(key) !== false;
-    });
+      'sp-opt-hot': 'enableHotHighlight'
+    }, 'sp-view-status');
 
-    const rec = document.getElementById('sp-hot-rec');
-    const cmt = document.getElementById('sp-hot-cmt');
-    const max = document.getElementById('sp-infinite-max');
-    if (rec) rec.value = configManager.get('hotRecommendThreshold') ?? 10;
-    if (cmt) cmt.value = configManager.get('hotCommentThreshold') ?? 20;
-    if (max) max.value = configManager.get('infiniteScrollMaxPages') ?? 10;
+    bindNumbers({
+      'sp-hot-rec': { key: 'hotRecommendThreshold', min: 1, max: 999, fallback: 10 },
+      'sp-hot-cmt': { key: 'hotCommentThreshold', min: 1, max: 999, fallback: 20 },
+      'sp-hot-blazing': { key: 'hotBlazingMultiplier', min: 1, max: 20, fallback: 3 },
+      'sp-infinite-max': { key: 'infiniteScrollMaxPages', min: 1, max: 50, fallback: 10 }
+    }, 'sp-view-status');
+
+    bindToggles({
+      'sp-opt-reading': 'enableReadingLayout',
+      'sp-opt-ad-wings': 'hideAdWings',
+      'sp-opt-clean-ui': 'enableCleanUI',
+      'sp-opt-comment-tree': 'enableCommentTree',
+      'sp-opt-markdown': 'enableMarkdownCode',
+      'sp-opt-markdown-posts': 'markdownRenderPosts'
+    }, 'sp-read-status');
+
+    bindToggles({ 'sp-opt-preview': 'enableHoverPreview' }, 'sp-preview-status');
+    bindNumbers({
+      'sp-preview-delay': { key: 'previewDelayMs', min: 0, max: 2000, fallback: 300 },
+      'sp-preview-chars': { key: 'previewBodyChars', min: 50, max: 1000, fallback: 200 },
+      'sp-preview-thumbs': { key: 'previewThumbCount', min: 0, max: 8, fallback: 4 },
+      'sp-preview-ttl': { key: 'previewCacheTtlMin', min: 1, max: 120, fallback: 10 }
+    }, 'sp-preview-status');
   }
 
-  document.getElementById('sp-view-save')?.addEventListener('click', async () => {
-    await configManager.set({
-      enableInfiniteScroll: document.getElementById('sp-opt-infinite')?.checked !== false,
-      enableHotHighlight: document.getElementById('sp-opt-hot')?.checked !== false,
-      enableMarkdownCode: document.getElementById('sp-opt-markdown')?.checked !== false,
-      enableDraftAutosave: document.getElementById('sp-opt-draft')?.checked !== false,
-      enableDcconFavorites: document.getElementById('sp-opt-dccon')?.checked !== false,
-      hotRecommendThreshold: parseInt(document.getElementById('sp-hot-rec')?.value, 10) || 10,
-      hotCommentThreshold: parseInt(document.getElementById('sp-hot-cmt')?.value, 10) || 20,
-      infiniteScrollMaxPages: parseInt(document.getElementById('sp-infinite-max')?.value, 10) || 10
-    });
-    setStatus('sp-view-status', '보기 옵션을 저장했습니다. 디시 탭을 새로고침하면 적용됩니다.');
-  });
+  // --- [작성] 패널 옵션 ---
+  function loadWriteSettings() {
+    bindToggles({
+      'sp-opt-draft': 'enableDraftAutosave',
+      'sp-opt-dccon': 'enableDcconFavorites'
+    }, 'sp-write-opt-status');
+    bindNumbers({
+      'sp-draft-interval': { key: 'draftAutosaveIntervalSec', min: 5, max: 300, fallback: 10 }
+    }, 'sp-write-opt-status');
+  }
+
+  // --- [갤러리] 패널 옵션 ---
+  function loadGallerySettings() {
+    bindToggles({
+      'sp-opt-nav-shortcuts': 'enableNavigationShortcuts',
+      'sp-opt-url-redirect': 'enableUrlRedirect'
+    }, 'sp-gallery-opt-status');
+    bindNumbers({
+      'sp-auto-refresh': { key: 'autoRefreshInterval', min: 0, max: 3600, fallback: 0 }
+    }, 'sp-gallery-opt-status');
+  }
+
+  // --- [차단] / [알림] / [검색] 패널의 마스터 스위치 ---
+  function loadGuardAlertSearchSettings() {
+    bindToggles({
+      'sp-opt-user-block': 'enableUserBlock',
+      'sp-opt-user-notes': 'enableUserNotes'
+    }, 'sp-user-rule-status');
+    bindToggles({ 'sp-opt-sound': 'soundNotifications' }, 'sp-alerts-status');
+    bindToggles({ 'sp-opt-search-engine': 'enableSearchEngine' }, 'sp-search-opt-status');
+  }
 
   // --- 임시저장 목록 ---
   async function renderDrafts() {
@@ -1386,6 +1481,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   loadSpamSettings();
   loadViewSettings();
+  loadWriteSettings();
+  loadGallerySettings();
+  loadGuardAlertSearchSettings();
   renderUserRules();
   renderDrafts();
   renderDccons();
@@ -1603,22 +1701,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------------------------------------------------------------
   // [보관] 아카이브 · 박제 / [분석] 갤러리 지분율
   // ---------------------------------------------------------------
-  const archiveToggles = {
+  bindToggles({
     'sp-opt-archive-cache': 'enableArchiveCache',
-    'sp-opt-archive-capture': 'enableArchiveCapture',
-    'sp-opt-user-analytics': 'enableUserAnalytics',
-    'sp-opt-comment-tree': 'enableCommentTree'
-  };
+    'sp-opt-archive-capture': 'enableArchiveCapture'
+  }, 'sp-archive-status');
 
-  Object.entries(archiveToggles).forEach(([elementId, key]) => {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.checked = configManager.get(key) !== false;
-    el.addEventListener('change', async () => {
-      await configManager.set(key, el.checked);
-      setStatus('sp-archive-status', '설정을 저장했습니다. 디시 탭을 새로고침하면 적용됩니다.');
-    });
-  });
+  // 글쓴이 댓글 강조는 읽기 기능이라 [보기] 패널로 옮겼다. 여기엔 분석 항목만 남는다.
+  bindToggles({ 'sp-opt-user-analytics': 'enableUserAnalytics' }, 'sp-analytics-summary');
 
   const archiveModeSelect = document.getElementById('sp-archive-mode');
   if (archiveModeSelect) {
@@ -1662,14 +1751,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await messageRouter.send(MessageAction.ARCHIVE_CLEAR, { galleryId });
     setStatus('sp-archive-status', `${galleryId} 갤러리 보관함을 비웠습니다.`);
     renderArchiveStats();
-
-  // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
-  panelReady = true;
-  const restoredView = configManager.get('spActiveView') || 'search';
-  if (restoredView === 'alerts') {
-    renderKeywordAlerts();
-    renderNotifications();
-  }
   });
 
   document.getElementById('sp-archive-clear-all')?.addEventListener('click', async (e) => {
@@ -1684,14 +1765,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await messageRouter.send(MessageAction.ARCHIVE_CLEAR, {});
     setStatus('sp-archive-status', '보관함을 모두 비웠습니다.');
     renderArchiveStats();
-
-  // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
-  panelReady = true;
-  const restoredView = configManager.get('spActiveView') || 'search';
-  if (restoredView === 'alerts') {
-    renderKeywordAlerts();
-    renderNotifications();
-  }
   });
 
   // --- 갤러리 지분율 분석 ---
@@ -1775,6 +1848,80 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('sp-analytics-run')?.addEventListener('click', runGalleryAnalytics);
 
   renderArchiveStats();
+
+  // ---------------------------------------------------------------
+  // [설정] 테마 / AI / 기타 기능 / 고급
+  // ---------------------------------------------------------------
+  const themeSelect = document.getElementById('sp-theme-select');
+  if (themeSelect) {
+    themeSelect.value = configManager.get('theme') || 'system';
+    themeSelect.addEventListener('change', async () => {
+      await configManager.set('theme', themeSelect.value);
+      themeSystem.applyTheme(themeSelect.value);
+      setStatus('sp-theme-status', '테마를 변경했습니다.');
+    });
+  }
+
+  bindToggles({ 'sp-opt-dc-dark': 'syncDcDarkMode' }, 'sp-theme-status');
+  bindToggles({ 'sp-opt-ai': 'enableAIFeatures' }, 'sp-ai-status');
+
+  const aiProvider = document.getElementById('sp-ai-provider');
+  const aiKey = document.getElementById('sp-ai-key');
+  const aiEndpoint = document.getElementById('sp-ai-endpoint');
+  const aiCredentials = document.getElementById('sp-ai-credentials');
+
+  /** 로컬 제공자는 키가 필요 없으므로 입력칸을 숨겨 오해를 줄인다. */
+  function syncAiCredentialVisibility() {
+    if (!aiCredentials || !aiProvider) return;
+    aiCredentials.classList.toggle('hidden', aiProvider.value === 'local');
+  }
+
+  async function loadAiSettings() {
+    const stored = (await storageManager.get('aiSettings'))?.aiSettings || {};
+    if (aiProvider) aiProvider.value = stored.provider || 'local';
+    if (aiKey) aiKey.value = stored.apiKey || '';
+    if (aiEndpoint) aiEndpoint.value = stored.endpoint || '';
+    syncAiCredentialVisibility();
+  }
+
+  aiProvider?.addEventListener('change', syncAiCredentialVisibility);
+
+  document.getElementById('sp-ai-save')?.addEventListener('click', async () => {
+    const provider = aiProvider?.value || 'local';
+    const apiKey = (aiKey?.value || '').trim();
+    if (provider !== 'local' && !apiKey) {
+      setStatus('sp-ai-status', 'API 키를 입력해야 이 제공자를 쓸 수 있습니다.', true);
+      return;
+    }
+    await storageManager.set({
+      aiSettings: {
+        enabled: document.getElementById('sp-opt-ai')?.checked !== false,
+        provider,
+        apiKey,
+        endpoint: (aiEndpoint?.value || '').trim()
+      }
+    });
+    setStatus('sp-ai-status', 'AI 설정을 저장했습니다.');
+  });
+
+  loadAiSettings();
+
+  bindToggles({
+    'sp-opt-media': 'enableMediaTools',
+    'sp-opt-comment-tools': 'enableCommentTools',
+    'sp-opt-automation': 'enableAutomation'
+  }, 'sp-misc-status');
+
+  bindToggles({
+    'sp-opt-sidepanel-click': { key: 'openSidePanelOnActionClick', defaultOn: false },
+    'sp-opt-test-feature': 'testFeature'
+  }, 'sp-advanced-status');
+
+  document.getElementById('sp-open-options')?.addEventListener('click', () => {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    }
+  });
 
   // 여기까지 오면 모든 선언이 초기화됐다. 마지막으로 보던 서비스를 복원한다.
   panelReady = true;

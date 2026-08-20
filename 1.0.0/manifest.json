@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DC Ultimate",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "description": "DCInside 브라우징 강화 확장 — 검색 수집, 키워드 알림, 유저 차단/분석, 아카이브 박제, 작성 도우미",
   "default_locale": "ko",
   "icons": {

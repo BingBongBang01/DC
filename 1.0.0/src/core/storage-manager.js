@@ -6,13 +6,14 @@ import { logger } from './logger.js';
 import { eventBus } from './event-bus.js';
 import { compareVersions } from '../utils/version-compare.js';
 
-export const CURRENT_SCHEMA_VERSION = '2.0.0';
+export const CURRENT_SCHEMA_VERSION = '2.0.2';
 
 export const INITIAL_STORAGE_SCHEMA = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   settings: {
     theme: 'system', // 'light', 'dark', 'system'
     syncDcDarkMode: true, // Mirror the extension theme onto DCInside's 야간모드
+    openSidePanelOnActionClick: false, // 툴바 아이콘 클릭 시 팝업 대신 사이드 패널
     autoRefreshInterval: 0, // 0 = disabled
     testFeature: true,
     enableHoverPreview: true,
@@ -59,11 +60,16 @@ export const INITIAL_STORAGE_SCHEMA = {
     // Phase 22: 아카이빙 / 가독성 / 유저 분석
     enableArchiveCache: true,
     enableArchiveCapture: true,
-    enableCommentTree: true,
+    enableCommentTree: true, // 글쓴이 댓글 강조 (2.0.2에서 대댓글 재정렬은 제거됨)
     enableUserAnalytics: true,
-    commentTreeEnabled: true,
     archiveDefaultMode: 'cache', // 'cache' | 'image' | 'pdf' | 'archive-today'
-    analyticsSampleSize: 200
+    analyticsSampleSize: 200,
+
+    // 2.0.2: 미리보기 팝업 세부 설정 (이전에는 전부 하드코딩이었다)
+    previewDelayMs: 300,
+    previewBodyChars: 200,
+    previewThumbCount: 4,
+    previewCacheTtlMin: 10
   },
   dc_auto_sig_images: [],
   dc_user_rules: [],
@@ -149,6 +155,20 @@ export class StorageManager {
             dc_auto_sig_images: Array.isArray(data.dc_auto_sig_images) ? data.dc_auto_sig_images : [],
             dc_drafts: data.dc_drafts && typeof data.dc_drafts === 'object' ? data.dc_drafts : {}
           };
+        }
+      },
+      {
+        // 2.0.2: 대댓글 재정렬 기능을 제거했다. `commentTreeEnabled` 는
+        // `enableCommentTree` 와 중복된 유령 키였으므로 걷어낸다. 재정렬을 일부러
+        // 껐던 사용자가 있으므로, 그 값이 false 였으면 강조 기능도 꺼진 채로 둔다.
+        upTo: '2.0.2',
+        migrate: (data) => {
+          const settings = { ...INITIAL_STORAGE_SCHEMA.settings, ...(data.settings || {}) };
+          if (settings.commentTreeEnabled === false && settings.enableCommentTree !== false) {
+            settings.enableCommentTree = false;
+          }
+          delete settings.commentTreeEnabled;
+          return { ...data, settings };
         }
       }
     ];

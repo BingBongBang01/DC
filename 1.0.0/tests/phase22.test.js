@@ -1,13 +1,12 @@
 /**
- * Phase 22 Tests — 아카이빙 / 유저 분석 / 댓글 트리
+ * Phase 22 Tests — 아카이빙 / 유저 분석
  */
 import assert from 'assert';
 import {
   parseDcDate,
   summarizeUserActivity,
   galleryShareStats,
-  suspiciousIpBands,
-  buildCommentTree
+  suspiciousIpBands
 } from '../src/core/archive/activity-analyzer.js';
 import { ArchiveDB } from '../src/core/archive/archive-db.js';
 
@@ -80,40 +79,6 @@ export async function runPhase22Tests() {
   assert.strictEqual(bands[0].band, '223.39');
   assert.deepStrictEqual(bands[0].nicknames.sort(), ['A', 'B', 'C']);
   console.log('✅ [Phase22] 같은 IP 대역의 다중 닉네임을 의심 신호로 잡아냄');
-
-  // 6. 대댓글 트리 (@닉네임 + parentId)
-  const tree = buildCommentTree([
-    { id: '1', author: '갑', content: '원 댓글' },
-    { id: '2', author: '을', content: '@갑 답글입니다' },
-    { id: '3', author: '병', content: '@을 답글의 답글' },
-    { id: '4', author: '정', content: '독립 댓글' },
-    { id: '5', author: '무', content: '지정 답글', parentId: '4' }
-  ]);
-
-  const depthOf = (id) => tree.find(node => node.id === id).depth;
-  assert.strictEqual(depthOf('1'), 0);
-  assert.strictEqual(depthOf('2'), 1, '@갑 → 갑의 댓글 아래');
-  assert.strictEqual(depthOf('3'), 2, '@을 → 을의 답글 아래');
-  assert.strictEqual(depthOf('4'), 0);
-  assert.strictEqual(depthOf('5'), 1, 'parentId가 있으면 그대로 사용');
-  assert.deepStrictEqual(tree.map(node => node.id), ['1', '2', '3', '4', '5'], '트리 순서로 평탄화');
-  assert.strictEqual(tree.find(node => node.id === '1').childCount, 1);
-
-  // 디시가 답글 대상 닉네임을 따로 줄 때(본문에 @가 없어도) 트리에 반영된다
-  const withTargetNick = buildCommentTree([
-    { id: '1', author: '갑', content: '첫 댓글' },
-    { id: '2', author: '을', content: '본문에는 @가 없다', replyToNick: '갑' }
-  ]);
-  assert.strictEqual(withTargetNick.find(n => n.id === '2').depth, 1, 'replyToNick으로도 부모를 찾는다');
-
-  // 자기 자신을 부모로 지정해도 순환하지 않는다
-  const selfRef = buildCommentTree([{ id: '1', author: '갑', content: 'x', parentId: '1' }]);
-  assert.strictEqual(selfRef[0].depth, 0);
-
-  // 존재하지 않는 닉네임 호출은 최상위로 남는다
-  const unknownMention = buildCommentTree([{ id: '1', author: '갑', content: '@없는사람 안녕' }]);
-  assert.strictEqual(unknownMention[0].depth, 0);
-  console.log('✅ [Phase22] @닉네임/parentId 기반 대댓글 트리가 구성됨');
 
   console.log('--- Phase 22 Tests Passed ---');
 }

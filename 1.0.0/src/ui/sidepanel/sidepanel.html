@@ -107,6 +107,9 @@
                 <option value="comments">댓글수순</option>
               </select>
             </div>
+
+            <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-search-engine" /> 다중 페이지 수집 엔진 사용</label>
+            <div id="sp-search-opt-status" class="sp-alert-form-status hidden" role="status"></div>
           </div>
         </details>
 
@@ -160,6 +163,27 @@
            <button type="button" id="sp-btn-nav-best" class="sp-btn-outline sp-flex-1">개념글</button>
            <button type="button" id="sp-btn-nav-notice" class="sp-btn-outline sp-flex-1">공지</button>
         </div>
+      </section>
+      <!-- 갤러리 이동 편의 -->
+      <section class="sp-section" aria-labelledby="heading-gallery-nav">
+        <h2 id="heading-gallery-nav" class="sp-section-title">이동 · 새로고침</h2>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-nav-shortcuts" /> 키보드 단축키 사용</label>
+        <div class="sp-alert-form-status">J / K 글 이동, ← / → 페이지 이동, B 북마크</div>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-url-redirect" /> 모바일(m.dcinside.com) 링크를 PC 주소로 자동 변경</label>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-auto-refresh">목록 자동 새로고침</label>
+          <select id="sp-auto-refresh" class="sp-select">
+            <option value="0">사용 안 함</option>
+            <option value="10">10초</option>
+            <option value="30">30초</option>
+            <option value="60">1분</option>
+            <option value="300">5분</option>
+          </select>
+        </div>
+        <div id="sp-gallery-opt-status" class="sp-alert-form-status hidden" role="status"></div>
       </section>
       <!-- Quick Access (Recent & Favorites) -->
       <section class="sp-section" aria-labelledby="heading-quick-access">
@@ -217,6 +241,9 @@
           <label class="sp-alert-form-check">
             <input type="checkbox" id="sp-alert-notify-chrome" checked /> 데스크톱 알림 사용
           </label>
+          <label class="sp-alert-form-check">
+            <input type="checkbox" id="sp-opt-sound" /> 알림 소리 재생
+          </label>
           <div class="sp-alert-form-actions">
             <button type="submit" id="sp-alert-form-save" class="sp-btn-outline">저장</button>
             <button type="button" id="sp-alert-form-cancel" class="sp-btn-outline">취소</button>
@@ -243,6 +270,12 @@
       <section class="sp-section" aria-labelledby="heading-user-rules">
         <div class="sp-results-header">
           <h2 id="heading-user-rules" class="sp-section-title">유저 메모 · 차단</h2>
+          <label class="sp-alert-form-check" style="margin:0;">
+            <input type="checkbox" id="sp-opt-user-block" /> 사용
+          </label>
+        </div>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-user-notes" /> 유저 노트 · 활동 태그 표시</label>
+        <div class="sp-alert-form-actions">
           <button type="button" id="sp-btn-add-user-rule" class="sp-btn-outline" style="padding: 4px 8px; font-size: 11px;">+ 등록</button>
         </div>
 
@@ -347,6 +380,19 @@
           <h2 id="heading-writing" class="sp-section-title">작성 도우미</h2>
         </div>
 
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-draft" /> 작성 중 자동 임시저장</label>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-draft-interval">저장 주기</label>
+          <select id="sp-draft-interval" class="sp-select">
+            <option value="5">5초</option>
+            <option value="10">10초</option>
+            <option value="30">30초</option>
+            <option value="60">60초</option>
+          </select>
+        </div>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-dccon" /> 디시콘 즐겨찾기 · /단축 입력</label>
+        <div id="sp-write-opt-status" class="sp-alert-form-status hidden" role="status"></div>
+
         <div class="sp-quick-tabs mt-2">
           <button type="button" class="sp-quick-tab active" data-target="sp-drafts">임시저장</button>
           <button type="button" class="sp-quick-tab" data-target="sp-dccons">디시콘 즐겨찾기</button>
@@ -405,7 +451,6 @@
         </div>
 
         <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-user-analytics" /> 닉네임/IP Alt+클릭 시 활동 팝오버</label>
-        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-comment-tree" /> 대댓글 트리 · 글쓴이 댓글 강조</label>
 
         <div id="sp-analytics-summary" class="sp-alert-form-status">분석 버튼을 누르면 수집된 글을 기준으로 계산합니다.</div>
         <div id="sp-analytics-list" class="sp-quick-content active" style="max-height: 300px;"></div>
@@ -419,26 +464,148 @@
         <h2 id="heading-view-options" class="sp-section-title">목록 보기 옵션</h2>
 
         <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-infinite" /> 무한 스크롤 · 다음 페이지 프리페치</label>
-        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-hot" /> 화제 글 하이라이트</label>
-        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-markdown" /> 마크다운 · 코드 하이라이팅</label>
-        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-draft" /> 작성 중 자동 임시저장</label>
-        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-dccon" /> 디시콘 즐겨찾기 · /단축 입력</label>
-
-        <div class="sp-alert-form-row">
-          <label class="sp-alert-form-label" for="sp-hot-rec">추천</label>
-          <input type="number" id="sp-hot-rec" class="sp-input" min="1" max="999" style="width: 70px;" />
-          <label class="sp-alert-form-label" for="sp-hot-cmt">댓글</label>
-          <input type="number" id="sp-hot-cmt" class="sp-input" min="1" max="999" style="width: 70px;" />
-        </div>
         <div class="sp-alert-form-row">
           <label class="sp-alert-form-label" for="sp-infinite-max">무한스크롤 최대</label>
           <input type="number" id="sp-infinite-max" class="sp-input" min="1" max="50" style="width: 70px;" />
           <span class="sp-alert-form-label">페이지</span>
         </div>
-        <div class="sp-alert-form-actions">
-          <button type="button" id="sp-view-save" class="sp-btn-outline">보기 옵션 저장</button>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-hot" /> 화제 글 하이라이트</label>
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-hot-rec">추천</label>
+          <input type="number" id="sp-hot-rec" class="sp-input" min="1" max="999" style="width: 66px;" />
+          <label class="sp-alert-form-label" for="sp-hot-cmt">댓글</label>
+          <input type="number" id="sp-hot-cmt" class="sp-input" min="1" max="999" style="width: 66px;" />
+          <label class="sp-alert-form-label" for="sp-hot-blazing">폭발 ×</label>
+          <input type="number" id="sp-hot-blazing" class="sp-input" min="1" max="20" style="width: 56px;" />
         </div>
         <div id="sp-view-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- 본문 읽기 -->
+      <section class="sp-section" aria-labelledby="heading-read-options">
+        <h2 id="heading-read-options" class="sp-section-title">본문 읽기</h2>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-reading" /> 목록 · 본문 · 댓글 다단 레이아웃</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-ad-wings" /> 좌우 날개 광고 숨김</label>
+        <div class="sp-alert-form-status">끄면 디시 원본의 가로 스크롤이 유지됩니다.</div>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-clean-ui" /> 클린 UI 모드</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-comment-tree" /> 글쓴이 댓글 강조 · 글쓴이만 보기</label>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-markdown" /> 마크다운 · 코드 하이라이팅</label>
+        <label class="sp-alert-form-check" style="margin-left: 18px;"><input type="checkbox" id="sp-opt-markdown-posts" /> 본문도 마크다운으로 렌더링</label>
+        <div id="sp-read-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- 미리보기 팝업 -->
+      <section class="sp-section" aria-labelledby="heading-preview-options">
+        <div class="sp-results-header">
+          <h2 id="heading-preview-options" class="sp-section-title">미리보기 팝업</h2>
+          <label class="sp-alert-form-check" style="margin:0;">
+            <input type="checkbox" id="sp-opt-preview" /> 사용
+          </label>
+        </div>
+
+        <details class="sp-advanced-options">
+          <summary class="sp-options-summary">
+            미리보기 세부 설정
+            <svg class="icon-expand" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+          </summary>
+          <div class="sp-options-content">
+            <div class="sp-alert-form-row">
+              <label class="sp-alert-form-label" for="sp-preview-delay">표시 지연</label>
+              <input type="number" id="sp-preview-delay" class="sp-input" min="0" max="2000" step="50" style="width: 80px;" />
+              <span class="sp-alert-form-label">ms</span>
+            </div>
+            <div class="sp-alert-form-row">
+              <label class="sp-alert-form-label" for="sp-preview-chars">본문 길이</label>
+              <input type="number" id="sp-preview-chars" class="sp-input" min="50" max="1000" step="50" style="width: 80px;" />
+              <span class="sp-alert-form-label">자</span>
+            </div>
+            <div class="sp-alert-form-row">
+              <label class="sp-alert-form-label" for="sp-preview-thumbs">썸네일</label>
+              <input type="number" id="sp-preview-thumbs" class="sp-input" min="0" max="8" style="width: 80px;" />
+              <span class="sp-alert-form-label">장 (0=숨김)</span>
+            </div>
+            <div class="sp-alert-form-row">
+              <label class="sp-alert-form-label" for="sp-preview-ttl">캐시 유지</label>
+              <input type="number" id="sp-preview-ttl" class="sp-input" min="1" max="120" style="width: 80px;" />
+              <span class="sp-alert-form-label">분</span>
+            </div>
+          </div>
+        </details>
+        <div id="sp-preview-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+      </div>
+
+      <div class="sp-view" id="sp-view-settings" data-view="settings" role="tabpanel" aria-label="설정">
+      <!-- 테마 -->
+      <section class="sp-section" aria-labelledby="heading-theme">
+        <h2 id="heading-theme" class="sp-section-title">테마</h2>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-theme-select">모드</label>
+          <select id="sp-theme-select" class="sp-select">
+            <option value="light">라이트</option>
+            <option value="dark">다크</option>
+            <option value="system">시스템 설정 따름</option>
+          </select>
+        </div>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-dc-dark" /> 디시인사이드 야간모드에 함께 적용</label>
+        <div id="sp-theme-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- AI -->
+      <section class="sp-section" aria-labelledby="heading-ai">
+        <div class="sp-results-header">
+          <h2 id="heading-ai" class="sp-section-title">AI 요약 · 분석</h2>
+          <label class="sp-alert-form-check" style="margin:0;">
+            <input type="checkbox" id="sp-opt-ai" /> 사용
+          </label>
+        </div>
+
+        <div class="sp-alert-form-row">
+          <label class="sp-alert-form-label" for="sp-ai-provider">제공자</label>
+          <select id="sp-ai-provider" class="sp-select">
+            <option value="local">로컬 (키 불필요)</option>
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini</option>
+            <option value="custom">직접 입력</option>
+          </select>
+        </div>
+
+        <div id="sp-ai-credentials" class="hidden">
+          <input type="password" id="sp-ai-key" class="sp-input" placeholder="API 키" autocomplete="off" />
+          <input type="text" id="sp-ai-endpoint" class="sp-input" placeholder="엔드포인트 URL (직접 입력 시)" autocomplete="off" />
+        </div>
+
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-ai-save" class="sp-btn-outline">AI 설정 저장</button>
+        </div>
+        <div id="sp-ai-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- 기타 기능 -->
+      <section class="sp-section" aria-labelledby="heading-misc">
+        <h2 id="heading-misc" class="sp-section-title">기타 기능</h2>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-media" /> 미디어 도구 · 중복 이미지 감지</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-comment-tools" /> 댓글 검색 · 필터 · 내보내기</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-automation" /> 자동화 규칙</label>
+        <div id="sp-misc-status" class="sp-alert-form-status hidden" role="status"></div>
+      </section>
+
+      <!-- 고급 -->
+      <section class="sp-section" aria-labelledby="heading-advanced">
+        <h2 id="heading-advanced" class="sp-section-title">고급</h2>
+
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-sidepanel-click" /> 아이콘 클릭 시 팝업 대신 사이드 패널 열기</label>
+        <label class="sp-alert-form-check"><input type="checkbox" id="sp-opt-test-feature" /> 테스트 피처 (코어 검증용)</label>
+
+        <div class="sp-alert-form-actions">
+          <button type="button" id="sp-open-options" class="sp-btn-outline">전체 옵션 페이지 열기</button>
+        </div>
+        <div id="sp-advanced-status" class="sp-alert-form-status hidden" role="status"></div>
       </section>
       </div>
     </main>

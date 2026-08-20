@@ -4,7 +4,7 @@
  */
 import { BaseFeature } from './base-feature.js';
 import { storageManager } from '../core/storage-manager.js';
-import { SELECTORS } from '../adapters/selectors.js';
+import { SELECTORS, queryFirst, cleanText } from '../adapters/selectors.js';
 import { logger } from '../core/logger.js';
 
 export class NavigationFeature extends BaseFeature {
@@ -97,11 +97,11 @@ export class NavigationFeature extends BaseFeature {
   }
 
   async bookmarkCurrentArticle() {
-    const titleElem = document.querySelector(SELECTORS.articleTitle);
+    const titleElem = queryFirst(document, SELECTORS.articleTitle);
     if (!titleElem) return;
 
     const bookmark = {
-      title: titleElem.textContent.trim(),
+      title: cleanText(titleElem, SELECTORS.articleTitleNoise),
       url: window.location.href,
       date: new Date().toISOString()
     };

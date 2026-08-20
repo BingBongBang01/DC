@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>본문 페이지 (모바일에서 작성)</title></head>
+<body>
+<!--
+  실제 gall.dcinside.com 본문 페이지 마크업에서 회귀 검증에 필요한 부분만 발췌 (2026-08 확인).
+
+  회귀 포인트:
+   1. h3.title.ub-word 가 span.title_subject 의 *부모* 다. 폴백에 `.ub-word` 가 있으면
+      querySelector 가 문서 순서 때문에 h3 를 먼저 돌려주고, 그 안의
+      em.blind("모바일에서 작성") 이 제목에 붙어 버린다.
+   2. 조회/추천/댓글에 "조회 ", "추천 ", "댓글 " 라벨이 붙어 온다.
+   3. 본문 페이지의 추천은 .gall_reply_num 이다. 아래 목록표의 td.gall_recommend 를
+      잡으면 "-" 를 읽어 0 이 된다.
+-->
+<div class="view_content_wrap">
+  <div class="gallview_head clear ub-content">
+    <!-- 모바일에서 작성 icon_write_mbl -->
+    <h3 class="title ub-word">
+      <span class="title_headtext"></span> <span class="title_subject">90억인구 인간만이아니라 동물 곤충 식물들도 노력하면서 살지않음??</span><span class="title_device"><span><em class="blind">모바일에서 작성</em><em class="sp_img icon_write_mbl"></em></span></span></h3>
+
+    <div class="gall_writer ub-writer" data-nick="프갤러" data-uid="" data-ip="211.221" data-loc="view">
+      <div class="fl">
+        <span>
+          <span class="nickname" title="프갤러"><em>프갤러</em></span><span class="ip">(211.221)</span>
+          <span class="gall_date" title="2026-08-20 11:44:37">2026.08.20 11:44:37</span>
+        </span>
+      </div>
+      <div class="fr">
+        <span class="gall_scrap"><button class="sp_scrap viewscrap">스크랩</button></span>
+        <span class="gall_count">조회 1,234</span>
+        <span class="gall_reply_num">추천 0</span>
+        <span class="gall_comment"><a href="#focus_cmt">댓글 0</a></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallview_contents">
+    <div class="inner clear">
+      <div class="writing_view_box">
+        <div class="write_div" style="overflow:hidden;width:900px;">
+          <p>러스트 안배우고 저능한 자바 고집해서 it 수준을 떨어뜨리는것과 같다.</p>
+          <div><img src="https://dcimg8.dcinside.co.kr/viewimage.php?id=abc&no=def" alt="" data-fileno="1056820"></div>
+          <p>- dc official App</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 페이지 하단의 "다른 글" 목록표. 여기의 td 가 본문 메타로 잡히면 안 된다. -->
+<table class="gall_list"><tbody>
+  <tr class="ub-content us-post" data-no="1">
+    <td class="gall_tit ub-word"><a href="/board/view/?id=programming&amp;no=1">다른 글</a></td>
+    <td class="gall_writer ub-writer" data-nick="ㅇㅇ" data-ip="1.2"><span class="nickname">ㅇㅇ</span></td>
+    <td class="gall_date" title="2026-08-20 09:00:00">09:00</td>
+    <td class="gall_count">99999</td>
+    <td class="gall_recommend">-</td>
+  </tr>
+</tbody></table>
+</body></html>

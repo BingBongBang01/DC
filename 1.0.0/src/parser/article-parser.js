@@ -3,7 +3,7 @@
  * Extracts normalized Article models from list table rows or article view DOM nodes
  */
 import { Article } from '../utils/models.js';
-import { SELECTORS } from '../adapters/selectors.js';
+import { SELECTORS, queryFirst, cleanText, textToInt } from '../adapters/selectors.js';
 import { mediaParser } from './media-parser.js';
 import { logger } from '../core/logger.js';
 
@@ -138,30 +138,36 @@ export class ArticleParser {
         });
       }
 
-      const titleElem = doc.querySelector(SELECTORS.articleTitle);
+      const titleElem = queryFirst(doc, SELECTORS.articleTitle);
       if (!titleElem) {
         logger.warn('ArticleParser.parseView: titleElem not found — selector may be outdated', SELECTORS.articleTitle);
         return null;
       }
 
-      const writerElem = doc.querySelector(SELECTORS.articleAuthor);
-      const dateElem = doc.querySelector(SELECTORS.articleDate);
-      const viewsElem = doc.querySelector(SELECTORS.articleViews);
-      const recElem = doc.querySelector(SELECTORS.articleRecommend);
+      const writerElem = queryFirst(doc, SELECTORS.articleAuthor);
+      const dateElem = queryFirst(doc, SELECTORS.articleDate);
+      const viewsElem = queryFirst(doc, SELECTORS.articleViews);
+      const recElem = queryFirst(doc, SELECTORS.articleRecommend);
+      const commentElem = queryFirst(doc, SELECTORS.articleCommentCount);
+      const headtextElem = queryFirst(doc, SELECTORS.articleHeadtext);
       const bodyElem = doc.querySelector(SELECTORS.articleBody);
 
-      const title = titleElem.textContent.trim();
-      const author = writerElem ? (writerElem.getAttribute('data-nick') || writerElem.textContent.trim()) : '';
+      // 제목 노드가 `.title_subject` 가 아니라 부모 h3 로 잡히는 경우에도 "앱에서
+      // 작성"/"모바일에서 작성" 같은 숨김 텍스트가 붙지 않도록 장식 노드를 걷어낸다.
+      const title = cleanText(titleElem, SELECTORS.articleTitleNoise);
+      const author = writerElem ? (writerElem.getAttribute('data-nick') || cleanText(writerElem, SELECTORS.articleTitleNoise)) : '';
       const authorId = writerElem ? (writerElem.getAttribute('data-uid') || null) : null;
       const ip = writerElem ? (writerElem.getAttribute('data-ip') || null) : null;
 
-      const viewsText = viewsElem ? viewsElem.textContent.trim() : '0';
-      const views = parseInt(viewsText.replace(/,/g, ''), 10) || 0;
+      // "조회 16" 처럼 라벨이 앞에 붙어 오므로 숫자만 뽑아야 한다.
+      const views = textToInt(viewsElem);
+      const recommendations = textToInt(recElem);
+      // 댓글은 AJAX 로 뒤늦게 채워져서 fetch 한 문서에는 목록이 없다. 헤더 표기를 쓴다.
+      const comments = textToInt(commentElem);
 
-      const recText = recElem ? recElem.textContent.trim() : '0';
-      const recommendations = parseInt(recText.replace(/,/g, ''), 10) || 0;
+      const subject = headtextElem ? cleanText(headtextElem).replace(/^\[|\]$/g, '') : '';
 
-      const date = dateElem ? dateElem.textContent.trim() : null;
+      const date = dateElem ? (dateElem.getAttribute('title') || cleanText(dateElem)) : null;
 
       let media = [];
       if (bodyElem) {
@@ -179,12 +185,14 @@ export class ArticleParser {
       return new Article({
         galleryId,
         title,
+        subject,
         author,
         authorId,
         ip,
         date,
         views,
         recommendations,
+        comments,
         hasImage,
         hasVideo,
         body: bodyText,

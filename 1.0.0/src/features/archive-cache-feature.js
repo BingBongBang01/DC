@@ -12,6 +12,7 @@ import { MessageAction } from '../core/message-contract.js';
 import { articleParser } from '../parser/article-parser.js';
 import { commentParser } from '../parser/comment-parser.js';
 import { escapeHTML } from '../utils/sanitizer.js';
+import { SELECTORS } from '../adapters/selectors.js';
 import { parseGalleryUrl } from '../core/gallery-context.js';
 
 export class ArchiveCacheFeature extends BaseFeature {
@@ -202,8 +203,11 @@ export class ArchiveCacheFeature extends BaseFeature {
     const list = document.querySelector('.cmt_list');
     if (!list) return;
 
+    // 최상위 댓글은 `comment_li_N`, 대댓글은 `reply_li_N` 이다. 접두어를 둘 다
+    // 벗겨야 대댓글이 "삭제된 댓글"로 잘못 잡히지 않는다.
     const visible = new Set(
-      Array.from(list.querySelectorAll('li.ub-content')).map(li => (li.id || '').replace('comment_li_', ''))
+      Array.from(list.querySelectorAll(SELECTORS.commentAnyItem))
+        .map(li => (li.id || '').replace(/^(?:comment|reply)_li_/, ''))
     );
 
     const res = await messageRouter.send(MessageAction.ARCHIVE_GET_COMMENTS, {

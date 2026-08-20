@@ -1,6 +1,6 @@
 {
   "name": "dc-ultimate",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "description": "DC Ultimate - Production Grade Chrome Extension for DCInside",
   "main": "src/background/index.js",
   "type": "module",
