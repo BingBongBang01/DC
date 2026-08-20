@@ -22,6 +22,7 @@ import { runKeywordAlertTests } from './keyword-alert.test.js';
 import { runAutoLoginTests } from './auto-login.test.js';
 import { runPhase21Tests } from './phase21.test.js';
 import { runPhase22Tests } from './phase22.test.js';
+import { runPageLayoutTests } from './page-layout.test.js';
 
 async function main() {
   console.log('===========================================================');
@@ -68,6 +69,8 @@ async function main() {
     await runPhase21Tests();
     console.log('');
     await runPhase22Tests();
+    console.log('');
+    await runPageLayoutTests();
 
     console.log('\n===========================================================');
     console.log('  🎉 ALL PHASE 1 THROUGH PHASE 19 TESTS PASSED SUCCESSFULLY!');

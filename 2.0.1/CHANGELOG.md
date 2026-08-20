@@ -8,6 +8,12 @@
 - **알림 아이콘 용량**: `chrome.notifications.create`에 2.68MB 아이콘을 넘기던 `src/core/notifications/notification-manager.js`를 포함해 알림 3곳(키워드 알림, 자동 로그인)의 `iconUrl`을 `assets/icons/icon128.png`(11.6KB)로 통일했습니다.
 - **확장자와 실제 형식이 다른 이미지**: `assets/icons/dc_ultimate_icon.png`는 실제로 JPEG였습니다. 미참조 원본 이미지들과 함께 `assets/icons/master/`로 옮기고 확장자를 바로잡았습니다. 패키지에 실리는 `assets/icons/` 용량은 3.2MB → 16KB가 되었습니다.
 
+### Fixed — 페이지 레이아웃
+- **좌우가 잘리는데 가로 스크롤이 안 되던 문제**: 광고 날개를 숨기는 주입 스타일에 `html, body { overflow-x: hidden !important }` 가 함께 들어 있었습니다. 디씨 목록은 `.dcwrap.width1160` — 가로 1160px 고정이라, 창이 그보다 좁으면 우측 사이드바가 스크롤 없이 잘려 나갔습니다. 콘텐츠 스크립트가 `document_idle` 에 실행되므로 로딩 직후 떠 있던 가로 스크롤바가 곧 사라지는 증상으로 나타났습니다. 오버플로 clamp 를 제거해 가로 스크롤을 되돌렸습니다.
+- **창 폭에 맞춰 `body` 를 축소하던 해킹 제거**: `document.body.style.zoom = innerWidth / 1160` 을 설정 없이 무조건 적용하고 `resize` 리스너도 해제하지 않았습니다. `innerWidth` 가 세로 스크롤바 폭을 포함해 배율이 늘 조금 크고, 남는 몇 px 이 위 `overflow-x: hidden` 에 먹혀 조용히 잘렸습니다. 축소 대신 가로 스크롤로 동작합니다.
+- **날개 광고 숨김 범위 확대**: 날개 배너는 `#ad_floating` 의 자식이 아니라 형제이고 클래스 이름이 페이지 종류별로 다릅니다(`ad_left_wing_list_top` 등). `#ad_floating` 과 `div[class*="_wing_"]` 를 함께 숨겨 목록 외 페이지에서도 걷어냅니다. 와일드카드는 `_wing_`(양쪽 밑줄)이어야 하며, `wing` 으로 하면 디씨의 `.following` 이 걸립니다.
+- 레이아웃 보정 로직을 `src/content/page-layout.js` 로 분리하고 `tests/page-layout.test.js` 를 추가했습니다. 실제 페이지 fixture 로 날개 셀렉터가 맞는지 확인하고, `overflow-x` 규칙과 `body.style.zoom` 이 되살아나면 실패합니다.
+
 ### Added — 패키징
 - **`npm run pack`**: 스토어 업로드용 zip 을 만드는 `scripts/pack.mjs` 를 추가했습니다(외부 의존성 없음). 엔트리 이름을 항상 슬래시(`/`)로 기록합니다 — 역슬래시(`assets\icons\icon128.png`)로 저장하는 압축 도구를 쓰면 크롬이 폴더 구조를 인식하지 못해 아이콘 경로가 사라지고 동일한 디코딩 오류로 설치가 실패합니다. 저장소에 있던 `DC-Ultimate-v1.0.0-store.zip` 이 그 경우로, 91개 엔트리 중 90개가 역슬래시였습니다. `node_modules/` · `tests/` · `scripts/` · `docs/` · `assets/icons/master/` 를 제외하며, manifest 와 package 의 버전이 어긋나거나 manifest 가 선언한 아이콘이 패키지에 없으면 실패합니다.
 
