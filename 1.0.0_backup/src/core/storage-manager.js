@@ -17,7 +17,6 @@ export const INITIAL_STORAGE_SCHEMA = {
     testFeature: true,
     enableHoverPreview: true,
     enableReadingLayout: false,
-    hideAdWings: false, // 좌우 날개 광고 숨김. OFF 면 디씨 원본 가로 스크롤이 유지된다
     enableNavigationShortcuts: true,
     enableUrlRedirect: false,
     enableSearchEngine: true,
@@ -49,7 +48,6 @@ export const INITIAL_STORAGE_SCHEMA = {
     draftAutosaveIntervalSec: 10,
     markdownRenderPosts: true,
     spActiveView: 'search',
-    spTileOrder: null, // null = 기본 순서. 배열이면 사용자가 드래그로 지정한 순서
 
     // 자짤(자동 첨부) 다중 이미지
     autoSigMode: 'random', // 'random' | 'single' | 'gallery'
@@ -61,7 +59,6 @@ export const INITIAL_STORAGE_SCHEMA = {
     enableArchiveCapture: true,
     enableCommentTree: true,
     enableUserAnalytics: true,
-    commentTreeEnabled: true,
     archiveDefaultMode: 'cache', // 'cache' | 'image' | 'pdf' | 'archive-today'
     analyticsSampleSize: 200
   },

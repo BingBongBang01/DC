@@ -38,7 +38,6 @@ import { loginAutomation } from '../auth/login-automation.js';
 import { articleParser } from '../parser/article-parser.js';
 import { commentParser } from '../parser/comment-parser.js';
 import { SELECTORS } from '../adapters/selectors.js';
-import { injectAdWingHideStyles, removeAdWingHideStyles } from './page-layout.js';
 
 logger.info('Content Script: Starting DC Ultimate content engine...');
 
@@ -271,9 +270,22 @@ async function initContentEngine() {
   });
 
   await runPhase('adStyles', () => {
-    syncAdWingStyles();
-    // 옵션에서 토글하면 새로고침 없이 바로 반영한다.
-    eventBus.on('config:updated', syncAdWingStyles);
+    if (currentPageInfo && currentPageInfo.type !== 'UNKNOWN') {
+      injectAdWingHideStyles();
+    }
+  });
+
+  await runPhase('zoomFit', () => {
+    if (!currentPageInfo || currentPageInfo.type === 'UNKNOWN') return;
+    
+    const applyZoomToFit = () => {
+      const minWidth = 1160;
+      document.body.style.zoom = window.innerWidth < minWidth
+        ? (window.innerWidth / minWidth).toFixed(4)
+        : '1';
+    };
+    window.addEventListener('resize', applyZoomToFit);
+    applyZoomToFit();
   });
 
   engineReady = true;
@@ -285,17 +297,21 @@ async function initContentEngine() {
   }
 }
 
-/**
- * `hideAdWings` 설정에 맞춰 날개 광고 숨김 스타일을 붙이거나 뗀다.
- * 기본값은 OFF — 디씨의 원본 가로 스크롤을 그대로 남겨 둔다.
- */
-function syncAdWingStyles() {
-  if (!currentPageInfo || currentPageInfo.type === 'UNKNOWN') return;
-  if (configManager.get('hideAdWings')) {
-    injectAdWingHideStyles();
-  } else {
-    removeAdWingHideStyles();
-  }
+function injectAdWingHideStyles() {
+  if (document.getElementById('dc-ultimate-ad-wing-hide-style')) return;
+  const style = document.createElement('style');
+  style.id = 'dc-ultimate-ad-wing-hide-style';
+  style.textContent = `
+    .ad_left_wing_list_top,
+    .ad_left_wing_right_top,
+    #ad_floating.ban_floating {
+      display: none !important;
+    }
+    html, body {
+      overflow-x: hidden !important;
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function applyDOMFilters() {

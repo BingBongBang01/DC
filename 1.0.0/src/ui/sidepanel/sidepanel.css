@@ -856,27 +856,58 @@ details[open] .icon-expand {
 
 /* =========================================================
    서비스 바 (상단 정사각형 타일) + 서비스별 본문 영역
+
+   타일이 패널 폭에 다 안 들어가면 페이지로 나뉜다. 각 페이지는 바 폭
+   100%를 차지하고 scroll-snap 으로 정렬되므로, 옆으로 밀면 페이지 단위로
+   딱 넘어간다. 타일 크기는 고정 — 폭에 따라 페이지당 개수만 바뀐다.
+   (같은 값이 service-tiles.js 의 TILE_SIZE/TILE_GAP/BAR_PADDING 에 있다)
    ========================================================= */
-.sp-servicebar {
+.sp-servicebar-wrap {
   flex-shrink: 0;
-  display: flex;
-  gap: 6px;
-  padding: 8px 12px;
   background: var(--md-sys-color-surface);
   border-bottom: 1px solid var(--md-sys-color-outline);
+}
+
+.sp-servicebar {
+  display: flex;
+  /* 좌우 패딩은 페이지가 갖는다. 스크롤 컨테이너에 두면 `flex: 0 0 100%` 가
+     패딩을 뺀 폭으로 풀려서 페이지 폭 != clientWidth 가 되고, 페이지 단위
+     스크롤 계산이 매 페이지마다 패딩만큼 어긋난다.
+     scroll-behavior 도 여기 두지 않는다 — smooth 를 걸면 `scrollLeft = n` 같은
+     즉시 이동(재렌더 후 위치 복원)이 애니메이션으로 새어 나간다. 부드럽게
+     넘겨야 하는 곳에서는 scrollTo 에 behavior smooth 를 직접 넘긴다. */
+  padding: 8px 0;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
 }
 .sp-servicebar::-webkit-scrollbar { display: none; }
 
+/* 재정렬 중에는 바가 함께 스크롤되면 안 된다 (엣지 오토스크롤만 허용) */
+.sp-servicebar.sp-reordering {
+  scroll-snap-type: none;
+  touch-action: none;
+}
+
+.sp-tile-page {
+  flex: 0 0 100%;
+  box-sizing: border-box;
+  padding: 0 12px;
+  scroll-snap-align: start;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 62px;
+  gap: 6px;
+  justify-content: start;
+}
+
 .sp-tile {
   position: relative;
-  /* Squares that share the panel width evenly; `aspect-ratio` keeps them
-     square whether the panel is 320px or docked wide. */
-  flex: 1 1 0;
-  min-width: 44px;
-  max-width: 68px;
-  aspect-ratio: 1 / 1;
+  /* 고정 정사각형. grid 안에서는 aspect-ratio 보다 명시적 높이가 안정적이다. */
+  width: 62px;
+  height: 62px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -889,9 +920,12 @@ details[open] .icon-expand {
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font-family: inherit;
+  /* 세로 스크롤/탭은 브라우저에 맡기고 가로 제스처만 우리가 본다. */
+  touch-action: pan-y;
   transition: background var(--md-sys-motion-duration-short) var(--md-sys-motion-easing),
               color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing),
-              border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing);
+              border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing),
+              transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing);
 }
 .sp-tile:hover {
   border-color: var(--md-sys-color-primary);
@@ -906,11 +940,23 @@ details[open] .icon-expand {
   border-color: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary-container);
 }
+
+/* 드래그 중인 타일: 손가락을 따라가므로 transform 트랜지션이 없어야 한다 */
+.sp-tile.sp-tile-dragging {
+  transition: box-shadow var(--md-sys-motion-duration-short) var(--md-sys-motion-easing);
+  z-index: 2;
+  cursor: grabbing;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border-color: var(--md-sys-color-primary);
+  opacity: 0.95;
+}
+
 .sp-tile-label {
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.2px;
+  pointer-events: none;
 }
 .sp-tile-badge {
   position: absolute;
@@ -927,8 +973,44 @@ details[open] .icon-expand {
   color: var(--md-sys-color-on-error);
   font-size: 10px;
   font-weight: 700;
+  pointer-events: none;
 }
 .sp-tile-badge.hidden { display: none !important; }
+
+/* 페이지 인디케이터 — 페이지가 2개 이상일 때만 보인다 */
+.sp-servicebar-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 0 6px;
+}
+.sp-servicebar-dots.hidden { display: none !important; }
+.sp-servicebar-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short) var(--md-sys-motion-easing),
+              width var(--md-sys-motion-duration-short) var(--md-sys-motion-easing);
+}
+.sp-servicebar-dot.active {
+  width: 16px;
+  border-radius: 3px;
+  background: var(--md-sys-color-primary);
+}
+.sp-servicebar-dot:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-tile,
+  .sp-servicebar-dot { transition: none; }
+  .sp-view.active { animation: none; }
+}
 
 /* 본문 영역: 선택된 서비스만 표시 */
 .sp-view {

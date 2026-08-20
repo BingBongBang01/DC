@@ -31,7 +31,7 @@ export class NotificationManager {
     if (this.isChromeNotificationsAvailable) {
       chrome.notifications.create(id || `notif_${Date.now()}`, {
         type: 'basic',
-        iconUrl: chrome.runtime.getURL('assets/icons/icon128.png'),
+        iconUrl: chrome.runtime.getURL('assets/icons/icon.png'),
         title: title || 'DC Ultimate 알림',
         message: message || '',
         priority: 1

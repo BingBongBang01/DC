@@ -1,10 +1,24 @@
 import { themeSystem } from '../theme/theme-system.js';
 import { configManager } from '../../core/config-manager.js';
+import { eventBus } from '../../core/event-bus.js';
 import { messageRouter } from '../../core/message-router.js';
 import { searchAggregationFeature } from '../../features/search-aggregation-feature.js';
 import { escapeHTML } from '../../utils/sanitizer.js';
 import { MessageAction } from '../../core/message-contract.js';
 import { signatureStore } from '../../core/signature/signature-store.js';
+import {
+  DEFAULT_TILE_ORDER,
+  TILE_SIZE,
+  TILE_GAP,
+  normalizeTileOrder,
+  tilesPerPage,
+  pageCount,
+  renderServiceBar,
+  renderPageDots,
+  createWheelPager
+} from './service-tiles.js';
+import { attachTileReorder } from './tile-reorder.js';
+import { throttle } from '../../utils/throttle.js';
 
 /**
  * Clamp a user-entered "수집 페이지 수" value to a sane integer range.
@@ -62,12 +76,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------------------------------------------------------------
   // 서비스 바: 상단 타일로 본문 영역 전환
   // ---------------------------------------------------------------
-  const serviceTiles = document.querySelectorAll('.sp-tile');
+  const serviceBar = document.getElementById('sp-servicebar');
+  const serviceDots = document.getElementById('sp-servicebar-dots');
   const serviceViews = document.querySelectorAll('.sp-view');
+
+  // 타일은 아래에서 동적으로 렌더되므로 매번 새로 읽는다. 뷰 섹션은 정적 마크업이라
+  // DOMContentLoaded 시점의 NodeList 를 그대로 써도 된다.
+  const getServiceTiles = () => serviceBar.querySelectorAll('.sp-tile');
+
+  let tileOrder = normalizeTileOrder(configManager.get('spTileOrder'));
+  let perPage = 0;
 
   // 알림 목록 렌더 함수는 이 아래에서 선언되는 const(pendingDeletes 등)를 쓰기 때문에
   // 초기화가 끝나기 전에는 호출하면 안 된다. 준비되면 아래에서 true로 바꾼다.
   let panelReady = false;
+
+  /** 활성 타일 표시만 갱신한다. 재렌더 후 복원에도 쓰이므로 부수효과가 없어야 한다. */
+  function markActiveTile(view) {
+    getServiceTiles().forEach(tile => {
+      const active = tile.dataset.view === view;
+      tile.classList.toggle('active', active);
+      tile.setAttribute('aria-selected', String(active));
+    });
+  }
 
   /**
    * Shows one service view and remembers it for the next time the panel opens.
@@ -75,14 +106,10 @@ document.addEventListener('DOMContentLoaded', async () => {
    * @param {boolean} [persist=true]
    */
   function switchView(view, persist = true) {
-    const known = Array.from(serviceTiles).some(tile => tile.dataset.view === view);
+    const known = DEFAULT_TILE_ORDER.includes(view);
     const target = known ? view : 'search';
 
-    serviceTiles.forEach(tile => {
-      const active = tile.dataset.view === target;
-      tile.classList.toggle('active', active);
-      tile.setAttribute('aria-selected', String(active));
-    });
+    markActiveTile(target);
     serviceViews.forEach(section => {
       section.classList.toggle('active', section.dataset.view === target);
     });
@@ -99,11 +126,124 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (persist) configManager.set('spActiveView', target);
   }
 
-  serviceTiles.forEach(tile => {
-    tile.addEventListener('click', () => switchView(tile.dataset.view));
+  /** 활성 타일이 몇 번째 페이지에 있는지. 재렌더 후 스크롤 위치를 되돌리는 데 쓴다. */
+  function activePageIndex() {
+    const idx = tileOrder.indexOf(configManager.get('spActiveView') || 'search');
+    return perPage > 0 ? Math.max(0, Math.floor(idx / perPage)) : 0;
+  }
+
+  function currentPageIndex() {
+    const w = serviceBar.clientWidth;
+    return w > 0 ? Math.round(serviceBar.scrollLeft / w) : 0;
+  }
+
+  function syncDots() {
+    renderPageDots(serviceDots, pageCount(tileOrder.length, perPage), currentPageIndex());
+  }
+
+  /**
+   * 서비스 바를 다시 그린다. 타일 노드가 새로 만들어지므로 활성 표시와 알림
+   * 배지 카운트를 즉시 복원해야 한다.
+   * @param {number} [scrollToPage] 렌더 후 맞출 페이지 (기본: 활성 타일이 있는 페이지)
+   */
+  function paintServiceBar(scrollToPage) {
+    renderServiceBar(serviceBar, tileOrder, perPage);
+    // switchView 는 본문을 맨 위로 스크롤한다. 재렌더는 보던 위치를 건드리면
+    // 안 되므로 활성 표시만 다시 칠한다.
+    markActiveTile(configManager.get('spActiveView') || 'search');
+    const page = scrollToPage ?? activePageIndex();
+    serviceBar.scrollLeft = page * serviceBar.clientWidth;
+    syncDots();
+    // 배지 노드가 새로 생겼으니 카운트를 다시 채운다.
+    if (panelReady) renderNotifications();
+  }
+
+  /** 폭이 바뀌어 페이지당 타일 수가 달라졌을 때만 재렌더한다. */
+  function relayoutServiceBar() {
+    const next = tilesPerPage(serviceBar.clientWidth);
+    if (next === perPage) {
+      syncDots();
+      return;
+    }
+    perPage = next;
+    paintServiceBar();
+  }
+
+  perPage = tilesPerPage(serviceBar.clientWidth || 320);
+  paintServiceBar();
+
+  // 마지막으로 보던 서비스를 실제로 펼친다. paintServiceBar 는 타일 표시만
+  // 복원하므로, 본문 섹션을 맞추는 건 여기서 한 번 해 줘야 한다.
+  switchView(configManager.get('spActiveView') || 'search', false);
+
+  // 타일이 재렌더되어도 살아 있도록 위임 리스너 하나만 둔다.
+  serviceBar.addEventListener('click', (e) => {
+    const tile = e.target.closest('.sp-tile');
+    if (tile) switchView(tile.dataset.view);
   });
 
-  switchView(configManager.get('spActiveView') || 'search', false);
+  // 좌우 화살표로 타일 사이를 옮겨 다닌다 — 키보드만으로도 페이지가 넘어가야 한다.
+  serviceBar.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const tiles = Array.from(getServiceTiles());
+    const at = tiles.indexOf(document.activeElement);
+    if (at === -1) return;
+    e.preventDefault();
+    const next = tiles[at + (e.key === 'ArrowRight' ? 1 : -1)];
+    if (!next) return;
+    next.focus();
+    next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+
+  serviceBar.addEventListener('scroll', throttle(syncDots, 100));
+
+  // 휠/트랙패드로도 페이지를 넘긴다. 세로 휠도 가로 이동으로 받는다 — 바는 한 줄이라
+  // 세로로 스크롤할 것이 없고, scroll-snap 이 걸려 있어 브라우저가 흘려 주는 스크롤은
+  // 스냅에 붙잡혀 제자리로 돌아온다.
+  const wheelPager = createWheelPager({
+    pages: () => pageCount(tileOrder.length, perPage),
+    currentPage: currentPageIndex,
+    // 점 인디케이터는 scroll 리스너가 따라오므로 여기서 건드리지 않는다.
+    goToPage: (page) => serviceBar.scrollTo({ left: page * serviceBar.clientWidth, behavior: 'smooth' })
+  });
+  serviceBar.addEventListener('wheel', (e) => {
+    // 재정렬 중에는 엣지 오토스크롤만 바를 움직인다.
+    if (serviceBar.classList.contains('sp-reordering')) return;
+    // 끝 페이지에서 더 굴리면 막지 않는다 — 본문이 대신 스크롤되는 게 자연스럽다.
+    if (wheelPager(e)) e.preventDefault();
+  }, { passive: false });
+
+  serviceDots.addEventListener('click', (e) => {
+    const dot = e.target.closest('.sp-servicebar-dot');
+    if (!dot) return;
+    serviceBar.scrollTo({ left: Number(dot.dataset.page) * serviceBar.clientWidth, behavior: 'smooth' });
+  });
+
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(throttle(relayoutServiceBar, 120)).observe(serviceBar);
+  } else {
+    window.addEventListener('resize', throttle(relayoutServiceBar, 120));
+  }
+
+  attachTileReorder({
+    bar: serviceBar,
+    metrics: () => ({ size: TILE_SIZE, gap: TILE_GAP, perPage }),
+    onReorder: (order) => {
+      tileOrder = normalizeTileOrder(order);
+      const page = currentPageIndex();
+      configManager.set('spTileOrder', tileOrder);
+      paintServiceBar(page);
+    }
+  });
+
+  // 다른 창의 패널에서 순서를 바꾸면 여기도 따라간다. 내가 방금 저장한 값이면
+  // 이미 그려 놓은 상태와 같으므로 건너뛴다.
+  eventBus.on('config:updated', () => {
+    const incoming = normalizeTileOrder(configManager.get('spTileOrder'));
+    if (incoming.join() === tileOrder.join()) return;
+    tileOrder = incoming;
+    paintServiceBar();
+  });
 
   /**
    * Rebuild the category (말머리) select box.

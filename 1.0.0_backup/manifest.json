@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "DC Ultimate",
-  "version": "2.0.1",
+  "version": "2.0.0",
   "description": "DCInside 브라우징 강화 확장 — 검색 수집, 키워드 알림, 유저 차단/분석, 아카이브 박제, 작성 도우미",
   "default_locale": "ko",
   "icons": {
-    "16": "assets/icons/icon16.png",
-    "48": "assets/icons/icon48.png",
-    "128": "assets/icons/icon128.png"
+    "16": "assets/icons/icon.png",
+    "48": "assets/icons/icon.png",
+    "128": "assets/icons/icon.png"
   },
   "permissions": [
     "storage",
@@ -61,9 +61,9 @@
     "default_popup": "src/ui/popup/popup.html",
     "default_title": "DC Ultimate",
     "default_icon": {
-      "16": "assets/icons/icon16.png",
-      "48": "assets/icons/icon48.png",
-      "128": "assets/icons/icon128.png"
+      "16": "assets/icons/icon.png",
+      "48": "assets/icons/icon.png",
+      "128": "assets/icons/icon.png"
     }
   },
   "side_panel": {

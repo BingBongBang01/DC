@@ -109,6 +109,13 @@ function applyTranslations() {
     }));
   }
 
+  const adWingsSwContainer = document.getElementById('switch-opt-ad-wings');
+  if (adWingsSwContainer) {
+    adWingsSwContainer.appendChild(createSwitch('hideAdWings', configManager.get('hideAdWings') ?? false, async (checked) => {
+      await configManager.set('hideAdWings', checked);
+    }));
+  }
+
   const autoSwContainer = document.getElementById('switch-opt-automation');
   if (autoSwContainer) {
     autoSwContainer.appendChild(createSwitch('enableAutomation', configManager.get('enableAutomation') ?? true, async (checked) => {

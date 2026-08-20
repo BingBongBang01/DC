@@ -1,10 +1,9 @@
 /**
- * CommentTreeFeature — 글쓴이 댓글 강조 / 모아보기
+ * CommentTreeFeature — 대댓글 트리(계층형) 변환 + 글쓴이 댓글 강조
  *
- * 댓글은 디시가 그려 준 원본 순서 그대로 둔다. 대댓글은 디시 자체 UI가 이미
- * `↳`와 들여쓰기로 표현하고 있어, 확장에서 DOM을 다시 쌓으면 답글이 원 댓글보다
- * 위로 올라가는 등 순서가 어긋난다. 그래서 이 기능은 순서를 건드리지 않고
- * 본문 작성자의 댓글을 표시하거나 그 댓글만 모아 보는 일만 한다.
+ * 디시 댓글은 대부분 한 줄로 나열되고, 답글 관계는 `@닉네임` 호출로만 남는다.
+ * 이를 파싱해 레딧처럼 들여쓰기 구조로 재정렬하고, 본문 작성자의 댓글을
+ * 따로 표시하거나 그 댓글만 모아 볼 수 있게 한다.
  *
  * 실제 마크업(2026-08 확인):
  *   <li id="comment_li_9194118" class="ub-content">
@@ -13,11 +12,15 @@
  */
 import { BaseFeature } from './base-feature.js';
 import { logger } from '../core/logger.js';
+import { configManager } from '../core/config-manager.js';
+import { buildCommentTree } from '../core/archive/activity-analyzer.js';
 
 export class CommentTreeFeature extends BaseFeature {
   constructor() {
-    super('enableCommentTree', 'Comment Tree', '글쓴이 댓글 강조 및 모아보기');
+    super('enableCommentTree', 'Comment Tree', '대댓글 계층 정렬 및 글쓴이 댓글 강조');
+    this.applied = false;
     this.authorOnly = false;
+    this._originalOrder = null;
   }
 
   async onEnable() {
@@ -30,6 +33,8 @@ export class CommentTreeFeature extends BaseFeature {
   }
 
   onPageChange() {
+    this.applied = false;
+    this._originalOrder = null;
     this.apply();
   }
 
@@ -54,63 +59,151 @@ export class CommentTreeFeature extends BaseFeature {
   apply() {
     if (!this.enabled) return;
     const list = this._list();
-    if (!list) return;
+    if (!list || list.dataset.dcuTreeApplied === '1') return;
 
-    const items = Array.from(list.querySelectorAll('li.ub-content'));
+    const items = Array.from(list.querySelectorAll(':scope > li.ub-content'));
     if (items.length === 0) return;
 
+    list.dataset.dcuTreeApplied = '1';
+    this._originalOrder = items.slice();
+
     const author = this._postAuthor();
-    let authorComments = 0;
-
-    for (const li of items) {
+    const parsed = items.map((li, index) => {
       const writer = li.querySelector('.gall_writer, .ub-writer');
-      const nick = writer?.getAttribute('data-nick') || '';
-      const uid = writer?.getAttribute('data-uid') || '';
-      const ip = writer?.getAttribute('data-ip') || '';
+      const body = li.querySelector('.usertxt, .cmt_txt');
 
+      // 디시가 답글 대상 닉네임을 따로 표시해 주면 그것을 쓰고, 본문 텍스트에서는
+      // 그 표시를 뺀다. (본문에 문자열로 합치면 닉과 내용이 붙어버려 파싱이 깨진다)
+      const targetNode = li.querySelector('.reply_target_nick');
+      const targetNick = targetNode ? targetNode.textContent.replace(/^@/, '').trim() : '';
+
+      let content = '';
+      if (body) {
+        const clone = body.cloneNode(true);
+        clone.querySelector('.reply_target_nick')?.remove();
+        content = (clone.textContent || '').trim();
+      }
+
+      return {
+        id: (li.id || `idx_${index}`).replace('comment_li_', ''),
+        author: writer?.getAttribute('data-nick') || '',
+        uid: writer?.getAttribute('data-uid') || '',
+        ip: writer?.getAttribute('data-ip') || '',
+        content,
+        replyToNick: targetNick,
+        element: li
+      };
+    });
+
+    // 글쓴이 댓글 표시 (트리 여부와 무관하게 항상 적용)
+    let authorComments = 0;
+    for (const comment of parsed) {
       const isAuthor = Boolean(author) && (
-        (author.uid && uid && author.uid === uid) ||
-        (!author.uid && author.ip && ip && author.ip === ip && author.nick === nick) ||
-        (!author.uid && !author.ip && author.nick && author.nick === nick)
+        (author.uid && comment.uid && author.uid === comment.uid) ||
+        (!author.uid && author.ip && comment.ip && author.ip === comment.ip && author.nick === comment.author) ||
+        (!author.uid && !author.ip && author.nick && author.nick === comment.author)
       );
-
-      li.classList.toggle('dcu-cmt-author', isAuthor);
-      if (!isAuthor) continue;
-
-      authorComments++;
-      if (writer && !writer.querySelector('.dcu-cmt-author-badge')) {
-        const badge = document.createElement('span');
-        badge.className = 'dcu-cmt-author-badge';
-        badge.textContent = '글쓴이';
-        writer.appendChild(badge);
+      comment.isAuthor = isAuthor;
+      comment.element.classList.toggle('dcu-cmt-author', isAuthor);
+      if (isAuthor) {
+        authorComments++;
+        const writer = comment.element.querySelector('.gall_writer, .ub-writer');
+        if (writer && !writer.querySelector('.dcu-cmt-author-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'dcu-cmt-author-badge';
+          badge.textContent = '글쓴이';
+          writer.appendChild(badge);
+        }
       }
     }
 
-    logger.debug(`CommentTreeFeature: marked ${authorComments}/${items.length} comment(s) by the post author.`);
-    this._mountToolbar(list, items.length, authorComments);
+    if (configManager.get('commentTreeEnabled') !== false) {
+      this._reorder(list, parsed);
+    }
+
+    this._mountToolbar(list, parsed.length, authorComments);
   }
 
-  /** 숨김만 되돌린다 — 순서는 애초에 건드리지 않는다. */
+  /**
+   * @param {Element} list
+   * @param {Array<Object>} parsed
+   */
+  _reorder(list, parsed) {
+    const tree = buildCommentTree(parsed.map(({ element, ...rest }) => rest));
+    const byId = new Map(parsed.map(comment => [String(comment.id), comment.element]));
+
+    let nested = 0;
+    const fragment = document.createDocumentFragment();
+
+    for (const node of tree) {
+      const element = byId.get(String(node.id));
+      if (!element) continue;
+      const depth = Math.min(node.depth || 0, 6);
+      element.classList.toggle('dcu-cmt-child', depth > 0);
+      element.style.marginLeft = depth > 0 ? `${depth * 18}px` : '';
+      element.dataset.dcuDepth = String(depth);
+      if (depth > 0) nested++;
+      fragment.appendChild(element);
+    }
+
+    list.appendChild(fragment);
+    this.applied = true;
+    logger.debug(`CommentTreeFeature: nested ${nested} reply/replies.`);
+  }
+
   restore() {
-    this.authorOnly = false;
-    this._list()?.querySelectorAll('.dcu-cmt-hidden').forEach(li => li.classList.remove('dcu-cmt-hidden'));
+    const list = this._list();
+    if (!list || !this._originalOrder) return;
+
+    this._originalOrder.forEach(li => {
+      li.classList.remove('dcu-cmt-child');
+      li.style.marginLeft = '';
+      delete li.dataset.dcuDepth;
+      list.appendChild(li);
+    });
+
+    list.querySelectorAll('.dcu-cmt-hidden').forEach(li => li.classList.remove('dcu-cmt-hidden'));
+    this.applied = false;
   }
 
   _mountToolbar(list, total, authorComments) {
     document.querySelector('.dcu-cmt-toolbar')?.remove();
-    if (authorComments === 0) return;
 
     const bar = document.createElement('div');
     bar.className = 'dcu-cmt-toolbar';
     bar.innerHTML = `
+      <button type="button" class="dcu-cmt-btn" data-action="tree">${this.applied ? '원본 순서' : '트리 보기'}</button>
       <button type="button" class="dcu-cmt-btn" data-action="author">글쓴이 댓글만 (${authorComments})</button>
       <span class="dcu-cmt-count">댓글 ${total}개</span>`;
 
     list.parentElement?.insertBefore(bar, list);
 
+    bar.querySelector('[data-action="tree"]')?.addEventListener('click', (event) => {
+      if (this.applied) {
+        this.restore();
+        event.currentTarget.textContent = '트리 보기';
+      } else {
+        const items = Array.from(list.querySelectorAll(':scope > li.ub-content'));
+        const parsed = items.map((li, index) => {
+          const body = li.querySelector('.usertxt, .cmt_txt');
+          const clone = body ? body.cloneNode(true) : null;
+          clone?.querySelector('.reply_target_nick')?.remove();
+          return {
+            id: (li.id || `idx_${index}`).replace('comment_li_', ''),
+            author: li.querySelector('.gall_writer, .ub-writer')?.getAttribute('data-nick') || '',
+            content: (clone?.textContent || '').trim(),
+            replyToNick: li.querySelector('.reply_target_nick')?.textContent.replace(/^@/, '').trim() || '',
+            element: li
+          };
+        });
+        this._reorder(list, parsed);
+        event.currentTarget.textContent = '원본 순서';
+      }
+    });
+
     bar.querySelector('[data-action="author"]')?.addEventListener('click', (event) => {
       this.authorOnly = !this.authorOnly;
-      list.querySelectorAll('li.ub-content').forEach(li => {
+      list.querySelectorAll(':scope > li.ub-content').forEach(li => {
         li.classList.toggle('dcu-cmt-hidden', this.authorOnly && !li.classList.contains('dcu-cmt-author'));
       });
       event.currentTarget.textContent = this.authorOnly

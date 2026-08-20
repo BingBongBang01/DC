@@ -11,6 +11,7 @@
     "syncDcDarkMode": true,
     "enableHoverPreview": true,
     "enableReadingLayout": false,
+    "hideAdWings": false,
     "enableNavigationShortcuts": true,
     "enableUrlRedirect": false,
     "enableSearchEngine": true,
@@ -18,7 +19,9 @@
     "enableCommentTools": true,
     "enableMediaTools": true,
     "enableAutomation": true,
-    "enableAIFeatures": true
+    "enableAIFeatures": true,
+    "spActiveView": "search",
+    "spTileOrder": null
   },
   "galleryProfiles": {},
   "filters": {

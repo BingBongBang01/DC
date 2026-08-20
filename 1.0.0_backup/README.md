@@ -43,48 +43,6 @@ Manifest V3 규격을 만족하며, 성능 최적화(Debounce/Throttle/LRU Cache
 
 ---
 
-## 🎨 아이콘
-
-`assets/icons/master/icon-2048.png`(2048×2048 원본)에서 크기별 아이콘을 생성합니다.
-
-```bash
-npm run icons
-```
-
-`icon16.png` / `icon48.png` / `icon128.png` 세 파일을 만듭니다(알림 `iconUrl` 도 `icon128.png` 사용).
-생성된 PNG는 `IHDR` / `IDAT` / `IEND` 청크만 담고 있습니다 — 이미지 편집기가 남기는
-사설 청크(`caBX` 등)나 과대 해상도가 섞이면 크롬이 확장 프로그램 설치 시점에
-`'icon.png' 이미지를 디코딩하지 못했습니다` 오류를 냅니다. `manifest.json`의
-`icons` / `action.default_icon` 경로는 반드시 이 스크립트가 만든 파일을 가리켜야 합니다.
-
-## 📦 스토어 업로드용 압축
-
-```bash
-npm run pack        # → dist/dc-ultimate-<version>.zip
-```
-
-`manifest.json`의 버전으로 이름을 붙이고, 다음을 제외한 나머지를 담습니다.
-
-* `node_modules/`, `package.json`, `package-lock.json` — 개발 의존성
-* `tests/`, `scripts/`, `docs/`, `.gitattributes` — 개발용 파일
-* `assets/icons/master/` — 아이콘 원본 (약 3.2 MB)
-* `dist/`, `*.zip` — 패키지 산출물
-
-압축 파일 내부 경로 구분자는 **반드시 슬래시(`/`)** 여야 합니다 — ZIP 스펙(APPNOTE 4.4.17)이
-요구하는 형식입니다. 역슬래시로 저장하는 도구를 쓰면 크롬이 `assets\icons\icon128.png`를
-폴더가 아닌 하나의 파일명으로 읽어, manifest가 가리키는 경로가 사라지고 같은 디코딩 오류로
-설치가 실패합니다. `npm run pack`은 항상 슬래시로 기록하고, 역슬래시가 섞이면 실패합니다.
-`manifest.json`과 `package.json`의 버전이 어긋나거나 manifest가 선언한 아이콘이 패키지에
-없을 때도 압축을 중단합니다.
-
-직접 압축한다면 슬래시를 쓰는 도구로 하세요.
-
-```bash
-zip -r ../dc-ultimate.zip . -x 'node_modules/*' 'tests/*' 'assets/icons/master/*' '*.zip'
-```
-
----
-
 ## 🧪 단원 테스트 실행
 
 ```bash
