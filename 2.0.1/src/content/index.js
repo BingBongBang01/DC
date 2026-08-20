@@ -38,6 +38,7 @@ import { loginAutomation } from '../auth/login-automation.js';
 import { articleParser } from '../parser/article-parser.js';
 import { commentParser } from '../parser/comment-parser.js';
 import { SELECTORS } from '../adapters/selectors.js';
+import { injectAdWingHideStyles } from './page-layout.js';
 
 logger.info('Content Script: Starting DC Ultimate content engine...');
 
@@ -275,19 +276,6 @@ async function initContentEngine() {
     }
   });
 
-  await runPhase('zoomFit', () => {
-    if (!currentPageInfo || currentPageInfo.type === 'UNKNOWN') return;
-    
-    const applyZoomToFit = () => {
-      const minWidth = 1160;
-      document.body.style.zoom = window.innerWidth < minWidth
-        ? (window.innerWidth / minWidth).toFixed(4)
-        : '1';
-    };
-    window.addEventListener('resize', applyZoomToFit);
-    applyZoomToFit();
-  });
-
   engineReady = true;
 
   if (initErrors.length > 0) {
@@ -295,23 +283,6 @@ async function initContentEngine() {
   } else {
     logger.info('Content Script: DC Ultimate content engine fully operational.');
   }
-}
-
-function injectAdWingHideStyles() {
-  if (document.getElementById('dc-ultimate-ad-wing-hide-style')) return;
-  const style = document.createElement('style');
-  style.id = 'dc-ultimate-ad-wing-hide-style';
-  style.textContent = `
-    .ad_left_wing_list_top,
-    .ad_left_wing_right_top,
-    #ad_floating.ban_floating {
-      display: none !important;
-    }
-    html, body {
-      overflow-x: hidden !important;
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 function applyDOMFilters() {
