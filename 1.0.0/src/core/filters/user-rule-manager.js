@@ -6,10 +6,16 @@
  * spot.
  *
  * Identity shapes on DCInside (all read from `.gall_writer`):
- *   - 고닉 (fixed nickname): data-uid is set  → match by `uid`
- *   - 유동/통피 (anonymous):  data-ip is set   → match by `ip` or `ipPrefix`
+ *   - 고닉 (fixed nickname):      data-uid is set → match by `uid`
+ *   - 반고닉 (semi-fixed):        data-uid is set → match by `uid`
+ *   - 유동/통피 (anonymous):      data-ip is set  → match by `ip` or `ipPrefix`
  *   - nickname text is never unique on its own, so `nick` rules exist but are
  *     documented as weaker in the UI.
+ *
+ * 고닉과 반고닉은 둘 다 uid 를 가지며, 닉 아이콘(`fix_nik.gif` vs `nik.gif`)으로만
+ * 갈린다 — `core/identity.js` 의 `classifyIdentity()` 참고. 규칙 매칭에는 차이가 없다:
+ * 반고닉이 `ㅇㅇ`처럼 겹치는 닉네임을 써도 uid 규칙은 개인 단위로 정확히 걸린다.
+ * 반대로 `nick` 규칙을 `ㅇㅇ` 에 걸면 무관한 여러 명이 함께 걸린다.
  */
 import { storageManager } from '../storage-manager.js';
 import { logger } from '../logger.js';

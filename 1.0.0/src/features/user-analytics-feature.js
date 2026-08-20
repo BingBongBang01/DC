@@ -12,6 +12,13 @@ import { messageRouter } from '../core/message-router.js';
 import { MessageAction } from '../core/message-contract.js';
 import { escapeHTML } from '../utils/sanitizer.js';
 import { parseGalleryUrl } from '../core/gallery-context.js';
+import {
+  readWriterIdentity,
+  userKeyOf,
+  parseUserKey,
+  identityLabel,
+  isAmbiguousKey
+} from '../core/identity.js';
 
 export class UserAnalyticsFeature extends BaseFeature {
   constructor() {
@@ -51,24 +58,20 @@ export class UserAnalyticsFeature extends BaseFeature {
     event.preventDefault();
     event.stopPropagation();
 
-    const user = {
-      nick: writer.getAttribute('data-nick') || '',
-      uid: writer.getAttribute('data-uid') || '',
-      ip: writer.getAttribute('data-ip') || ''
-    };
-    if (!user.nick && !user.uid && !user.ip) return;
+    const user = readWriterIdentity(writer);
+    if (!user || (!user.nick && !user.uid && !user.ip)) return;
 
     this.show(writer, user).catch(err => logger.warn('UserAnalytics: failed to show history:', err));
   }
 
   /**
    * @param {Element} anchor
-   * @param {{nick: string, uid: string, ip: string}} user
+   * @param {{nick: string, uid: string, ip: string, identity?: string, key?: string}} user
    */
   async show(anchor, user) {
     const context = parseGalleryUrl(window.location.href);
     const galleryId = context.valid ? context.galleryId : '';
-    const authorKey = user.uid ? `uid:${user.uid}` : user.ip ? `ip:${user.ip}` : `nick:${user.nick}`;
+    const authorKey = user.key || userKeyOf(user);
 
     this.close();
     const box = document.createElement('div');
@@ -101,7 +104,18 @@ export class UserAnalyticsFeature extends BaseFeature {
       </div>`).join('');
 
     const label = user.nick || user.uid || user.ip || '알 수 없음';
-    const identity = [user.uid ? `uid ${user.uid}` : '', user.ip ? `IP ${user.ip}` : ''].filter(Boolean).join(' · ');
+    // 닉네임이 `ㅇㅇ`처럼 겹쳐도 신분과 uid 를 함께 보여주면 눈으로 구분된다.
+    const identity = [
+      user.identity ? identityLabel(user.identity) : '',
+      user.uid ? `uid ${user.uid}` : '',
+      user.ip ? `IP ${user.ip}` : ''
+    ].filter(Boolean).join(' · ');
+
+    // uid 가 없는 키는 남을 함께 집계한다. 통계를 개인 기록으로 오해하지 않게 알린다.
+    const { type: keyType } = parseUserKey(authorKey);
+    const ambiguityNotice = keyType === 'ip'
+      ? 'IP는 2옥텟까지만 공개되어 같은 대역의 다른 사람이 섞일 수 있습니다.'
+      : '닉네임만으로는 사람을 특정할 수 없어 여러 명의 기록이 섞일 수 있습니다.';
 
     box.innerHTML = `
       <div class="dcu-analytics-head">
@@ -118,6 +132,7 @@ export class UserAnalyticsFeature extends BaseFeature {
       ${summary?.lastSeen ? `<div class="dcu-analytics-meta">최근 활동: ${escapeHTML(new Date(summary.lastSeen).toLocaleString('ko-KR'))}</div>` : ''}
       ${(summary?.nicknames || []).length > 1 ? `<div class="dcu-analytics-meta">관측된 닉네임: ${escapeHTML(summary.nicknames.slice(0, 6).join(', '))}</div>` : ''}
       ${(sameIpNicknames || []).length > 1 ? `<div class="dcu-analytics-warn">같은 IP 대역에서 닉네임 ${sameIpNicknames.length}개 관측: ${escapeHTML(sameIpNicknames.slice(0, 6).join(', '))}</div>` : ''}
+      ${isAmbiguousKey(authorKey) ? `<div class="dcu-analytics-warn">${escapeHTML(ambiguityNotice)}</div>` : ''}
       ${(summary?.recentPosts || []).length ? `<div class="dcu-analytics-list">${summary.recentPosts.slice(0, 5).map(post => `
         <a href="${escapeHTML(post.url || '#')}" target="_blank" rel="noopener">${escapeHTML(post.title || '(제목 없음)')}</a>`).join('')}</div>` : ''}
       <div class="dcu-analytics-actions">
@@ -129,8 +144,7 @@ export class UserAnalyticsFeature extends BaseFeature {
     box.querySelector('.dcu-analytics-close')?.addEventListener('click', () => this.close());
 
     const addRule = async (action) => {
-      const [kind, value] = authorKey.split(/:(.+)/);
-      const type = kind === 'uid' ? 'uid' : kind === 'ip' ? 'ip' : 'nick';
+      const { type, value } = parseUserKey(authorKey);
       const memo = action === 'memo'
         ? (summary?.postCount || summary?.commentCount
             ? `글 ${summary.postCount} · 댓글 ${summary.commentCount}`

@@ -12,6 +12,7 @@
  *   comments — 본문 페이지에서 수집한 댓글   (key: `${galleryId}:${postId}:${commentId}`)
  */
 import { logger } from '../logger.js';
+import { userKeyOf } from '../identity.js';
 
 const DB_NAME = 'dc_ultimate_archive';
 const DB_VERSION = 1;
@@ -105,14 +106,14 @@ export class ArchiveDB {
   }
 
   /**
-   * 작성자를 하나의 키로 정규화 (고닉은 uid, 유동은 IP).
+   * 작성자를 하나의 키로 정규화 (고닉·반고닉은 uid, 유동닉은 IP).
+   *
+   * 반고닉도 uid 를 가지므로 닉네임이 `ㅇㅇ`처럼 겹쳐도 개인별로 갈라진다.
    * @param {{authorId?: string, ip?: string, author?: string}} item
    * @returns {string}
    */
   static authorKeyOf(item = {}) {
-    if (item.authorId) return `uid:${item.authorId}`;
-    if (item.ip) return `ip:${item.ip}`;
-    return `nick:${item.author || ''}`;
+    return userKeyOf({ uid: item.authorId, ip: item.ip, nick: item.author });
   }
 
   /**

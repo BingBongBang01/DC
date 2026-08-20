@@ -153,14 +153,17 @@ const band = post.ip.split('.').slice(0, 2).join('.');
 
 ---
 
-## 6. 현재 확장 코드의 상태
+## 6. 확장 코드의 상태 (§7이 각 항목의 처리 결과)
+
+아래 §6.1~§6.3은 **분석 당시** 상태다. 이후 §7의 1·2·3·5가 구현되어 §6.2와 §6.3은
+해소됐고, 서술은 왜 그런 변경이 필요했는지 남겨두기 위해 그대로 둔다.
 
 ### 6.1 이미 개인 단위로 동작하는 부분
 
 작성자 정규화 키가 uid를 최우선으로 쓴다.
 
 ```js
-// src/core/archive/archive-db.js:112
+// src/core/archive/archive-db.js — 현재는 core/identity.js 의 userKeyOf() 로 위임
 static authorKeyOf(item = {}) {
   if (item.authorId) return `uid:${item.authorId}`;
   if (item.ip)       return `ip:${item.ip}`;
@@ -168,66 +171,78 @@ static authorKeyOf(item = {}) {
 }
 ```
 
-`src/features/user-analytics-feature.js:71`도 같은 우선순위를 쓴다. 반고닉은 `authorId`가
+`src/features/user-analytics-feature.js`도 같은 우선순위를 쓴다. 반고닉은 `authorId`가
 채워지므로 `uid:guest1433` / `uid:chartman` / `uid:table9132`로 **자동으로 갈라진다.**
-아카이브 인덱스도 `['galleryId', 'authorKey']`(`archive-db.js:55`)라서, 활동 조회·지분율
-집계가 반고닉 개인별로 이미 정확하다. 즉 **이 부분은 고칠 것이 없다.**
+아카이브 인덱스도 `['galleryId', 'authorKey']`(`archive-db.js`)라서, 활동 조회·지분율
+집계가 반고닉 개인별로 이미 정확했다. 즉 **이 부분은 고칠 것이 없었다** — 다만 같은
+로직이 두 곳에 복제돼 있어 `userKeyOf()` 하나로 합쳤다.
 
-### 6.2 표기 문제 (동작에는 영향 없음)
+### 6.2 표기 문제 (동작에는 영향 없음) — 해소됨
 
-여러 곳이 "uid = 고닉"이라는 이분법으로 서술돼 있어, 반고닉이 고닉으로 오분류된다.
+여러 곳이 "uid = 고닉"이라는 이분법으로 서술돼 있어, 반고닉이 고닉으로 오분류됐다.
 
-- `src/core/filters/user-rule-manager.js:8-12` — 신분 설명 docstring
-- `src/core/archive/archive-db.js:108` — "고닉은 uid, 유동은 IP"
-- `FEATURES.md:47`, `README.md:27` — "고닉(uid)/유동/IP 대역"
+- `src/core/filters/user-rule-manager.js` — 신분 설명 docstring
+- `src/core/archive/archive-db.js` — "고닉은 uid, 유동은 IP"
+- `FEATURES.md`, `README.md` — "고닉(uid)/유동/IP 대역"
 
-`matchUserRule()`의 실제 매칭 로직은 uid를 문자열로 비교하므로 **동작은 정상**이다.
-순수하게 용어·문서 층위의 문제다.
+`matchUserRule()`의 실제 매칭 로직은 uid를 문자열로 비교하므로 **동작은 정상**이었다.
+순수하게 용어·문서 층위의 문제였고, 네 곳 모두 3분류로 고쳤다.
 
-### 6.3 실제 결함: `userNotes`의 키가 자유 입력
+### 6.3 실제 결함: `userNotes`의 키가 자유 입력 — 해소됨
 
-`UserNotesFeature.setNote(userKey, ...)`는 임의 문자열을 키로 받는데, 유일한 호출부가
-설정 페이지의 **수동 입력창**이다.
+`UserNotesFeature.setNote(userKey, ...)`는 임의 문자열을 키로 받았는데, 유일한 호출부가
+설정 페이지의 **수동 입력창**이었다.
 
 ```js
-// src/ui/options/options.js:345-352
+// src/ui/options/options.js — 현재는 normalizeUserKey() 를 통과시킨다
 const key = document.getElementById('un-key').value.trim();
 ...
 await userNotesFeature.setNote(key, note);
 ```
 
 사용자가 `ㅇㅇ`이라고 입력하면 그 메모는 위 표의 10명 전체를 가리키는 셈이 되어
-의미를 잃는다. 작성자 요소에서 키를 받아오는 경로가 없어서, **정작 이 기능만
-사람 단위로 동작하지 않는다.**
+의미를 잃었다. 작성자 요소에서 키를 받아오는 경로가 없어서, **정작 이 기능만
+사람 단위로 동작하지 않았다.** 이제 입력이 정규화 키로 바뀌어 저장되고, uid가 아닌
+약한 키에는 저장 전에 무엇이 함께 걸리는지 확인을 받는다.
 
-주의할 점은 확장에 메모가 **두 갈래**로 존재한다는 것이다.
+주의할 점은 확장에 메모가 **두 갈래**로 존재한다는 것이다. 이 부분은 **아직 통합되지
+않았다.**
 
-1. `userNotes` (위, 설정 화면 전용, 구분력 없음)
-2. `UserRuleManager`의 `action: 'label'` — 활동 팝오버의 "메모 추가" 버튼
-   (`user-analytics-feature.js:131-146`)이 쓰는 경로. 이쪽은 `authorKey`에서
-   `uid`/`ip`/`nick` 타입을 뽑아 넘기므로 **반고닉에 대해 정확하다.**
+1. `userNotes` — 설정 화면의 로컬 메모 저장소. 키는 이제 정규화되지만, 페이지에
+   라벨로 뜨지는 않는다.
+2. `UserRuleManager`의 `action: 'label'` — 활동 팝오버의 "메모 추가" 버튼이 쓰는 경로.
+   `authorKey`에서 `uid`/`ip`/`nick` 타입을 뽑아 넘기므로 **반고닉에 대해 정확하고**,
+   페이지에 메모 라벨을 실제로 그려주는 쪽이다.
 
-따라서 "지금 당장 사람별 메모를 제대로 쓰는 방법"은 설정 화면이 아니라,
-목록/댓글에서 작성자를 **Alt+클릭**해 뜨는 활동 팝오버의 "메모 추가"다
-(Alt 조건은 `user-analytics-feature.js:49`에서 DC 자체 메뉴와 충돌을 피하려 걸어둔 것).
+따라서 "페이지에서 보이는 사람별 메모"를 쓰려면 설정 화면이 아니라, 목록/댓글에서
+작성자를 **Alt+클릭**해 뜨는 활동 팝오버의 "메모 추가"를 써야 한다 (Alt 조건은
+`user-analytics-feature.js`에서 DC 자체 메뉴와 충돌을 피하려 걸어둔 것). 어느 저장소를
+정본으로 삼을지는 설계 판단이 남아 있다.
 
 ---
 
-## 7. 개선 제안 (이번 범위 아님 — 구현하지 않음)
+## 7. 개선 항목과 현재 상태
 
-우선순위 순으로, 근거가 확보된 것만 적는다.
+우선순위 순으로, 근거가 확보된 것만 적는다. 1·2·3·5는 구현됐고 4는 일부만 됐다.
 
-1. **`userNotes`를 정규화 키로 이관** — 작성자 요소에서 `authorKeyOf()`와 같은 규칙으로
-   키를 만들어 넘기고, 설정 화면의 자유 입력은 마이그레이션 대상으로 둔다.
-   (§6.3의 유일한 실제 결함)
-2. **신분 분류 함수 도입** — `data-uid`/`data-ip`에 `writer_nikcon img`의 파일명
-   (`fix_nik` vs `nik`)을 더해 `고닉 | 반고닉 | 유동닉`을 반환하는 순수 함수. 픽스처에
-   50건의 정답 데이터가 이미 있어 그대로 테스트로 쓸 수 있다.
-3. **UI에 신분 표기** — 팝오버·라벨에 신분과 uid를 함께 보여, `ㅇㅇ` 3명이 눈으로도
-   갈라지게 한다. (사용자가 겪은 "굳이 체크해야만 구분"의 직접적 해소)
-4. **닉네임 규칙에 경고** — `nick` 타입 규칙 추가 시 해당 갤러리에서 그 닉네임을 쓰는
-   서로 다른 식별자 수를 세어 보여준다. `ㅇㅇ`이면 "10명에게 적용됨"이 뜨는 식.
-5. **문서·주석의 이분법 수정** — §6.2 목록.
+1. **`userNotes`를 정규화 키로 이관** — 구현됨. `normalizeUserKey()`가 입력을
+   `uid:`/`ip:`/`nick:` 키로 바꿔 저장하고, `migrateLegacyKeys()`가 기존 자유 입력 키를
+   한 번 옮긴다(멱등, 충돌 시 `updatedAt` 늦은 쪽). 목록은 `describeKey()`로
+   `ㅇㅇ · 반고닉 (uid:guest1433)`처럼 보여준다. (§6.3의 실제 결함 해소)
+2. **신분 분류 함수 도입** — 구현됨. `src/core/identity.js`의 `classifyIdentity()`가
+   `data-uid`/`data-ip`에 `writer_nikcon img` 파일명을 더해 신분을 판정하고,
+   `readWriterIdentity()`가 작성자 요소에서 한 번에 읽는다. 픽스처 52건을 정답으로
+   쓰는 회귀 테스트는 `tests/identity.test.js`.
+3. **UI에 신분 표기** — 구현됨. 활동 팝오버 머리글이 `반고닉 · uid guest1433`로 나온다.
+   (사용자가 겪은 "굳이 체크해야만 구분"의 직접적 해소)
+4. **약한 키 경고** — 일부 구현. uid가 아닌 키로 활동을 조회하면 팝오버가, 그런 키로
+   메모를 저장하려 하면 설정 화면이 각각 "여러 명이 섞인다"고 알린다. 다만 **`nick` 차단
+   규칙을 만들 때 "이 갤러리에서 그 닉네임을 쓰는 식별자가 몇 명인지" 세어 보여주는 것은
+   아직 없다** — 예: `ㅇㅇ`이면 "10명에게 적용됨". 오차단 위험이 가장 큰 지점이라 남겨둔다.
+5. **문서·주석의 이분법 수정** — 구현됨. §6.2 목록의 네 곳을 3분류로 고쳤다.
+
+아직 손대지 않은 것: 두 갈래 메모 시스템(§6.3)의 통합. `userNotes`와 규칙 기반
+`label`은 지금도 별개 저장소이며, 어느 쪽을 정본으로 삼을지는 설계 판단이 필요하다.
 
 ---
 

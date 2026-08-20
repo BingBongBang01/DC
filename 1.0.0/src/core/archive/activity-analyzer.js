@@ -142,6 +142,13 @@ export function galleryShareStats(posts, sampleSize = 200) {
 
 /**
  * 같은 IP 대역(앞 두 옥텟)에서 여러 닉네임이 나오는지 — 통피/다중 계정 의심 신호.
+ *
+ * 주의: DC 가 유동닉 IP 를 이미 2옥텟까지만 공개하므로(`175.223`), 아래 `slice(0, 2)` 는
+ * 목록에서 수집한 데이터에 대해서는 값을 바꾸지 않는다. 즉 이 함수의 "대역 묶기"는
+ * 실질적으로 정확한 IP 일치와 같다. 그리고 하나의 2옥텟 대역에는 무관한 사람이 다수
+ * 들어오므로, 여기서 나온 결과는 다중 계정의 **증거가 아니라 단서**로만 써야 한다
+ * (`ㅇㅇ` 같은 흔한 닉네임은 서로 남인데도 함께 잡힌다).
+ *
  * @param {Array<Object>} posts
  * @param {number} [minNicknames=3]
  * @returns {Array<{band: string, nicknames: string[], count: number}>}
